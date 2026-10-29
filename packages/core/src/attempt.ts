@@ -1,4 +1,4 @@
-import type { Quiz } from './quiz';
+import type { Quiz } from './quiz.ts';
 
 /** Returns a number in [0, 1), like Math.random. */
 export type RandomSource = () => number;

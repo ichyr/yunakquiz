@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { quizSchema } from './index';
+import { quizSchema } from './index.ts';
 
 const validQuiz = {
   slug: 'ivan-bohun',

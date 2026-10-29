@@ -1,4 +1,4 @@
-import { canFinish, type Attempt, type AttemptOption } from './attempt';
+import { canFinish, type Attempt, type AttemptOption } from './attempt.ts';
 
 export interface Score {
   correct: number;

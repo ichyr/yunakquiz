@@ -7,7 +7,7 @@ import {
   startAttempt,
   type Attempt,
   type Quiz,
-} from './index';
+} from './index.ts';
 
 const quiz: Quiz = quizSchema.parse({
   slug: 'sample',

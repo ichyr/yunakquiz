@@ -1,3 +1,3 @@
-export * from './quiz';
-export * from './attempt';
-export * from './review';
+export * from './quiz.ts';
+export * from './attempt.ts';
+export * from './review.ts';

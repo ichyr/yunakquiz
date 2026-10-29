@@ -11,7 +11,10 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "pnpm -r test",
-    "typecheck": "pnpm -r typecheck"
+    "typecheck": "pnpm -r typecheck",
+    "db:up": "docker compose up -d --wait",
+    "db:seed": "pnpm --filter @yunakquiz/api db:seed",
+    "dev:api": "pnpm --filter @yunakquiz/api dev"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.4",

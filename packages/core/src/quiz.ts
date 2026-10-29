@@ -36,7 +36,24 @@ export const quizSchema = z.object({
   questions: z.array(questionSchema).min(1),
 });
 
+/** How a Quiz appears in Quiz lists and search results. */
+export const quizSummarySchema = quizSchema.pick({
+  slug: true,
+  title: true,
+  description: true,
+  language: true,
+});
+
+export const categoryWithQuizzesSchema = z.object({
+  category: categorySchema,
+  quizzes: z.array(quizSummarySchema),
+});
+
 export type Category = z.infer<typeof categorySchema>;
 export type Option = z.infer<typeof optionSchema>;
 export type Question = z.infer<typeof questionSchema>;
 export type Quiz = z.infer<typeof quizSchema>;
+/** A Quiz as written in a seed file, before parsing. */
+export type QuizInput = z.input<typeof quizSchema>;
+export type QuizSummary = z.infer<typeof quizSummarySchema>;
+export type CategoryWithQuizzes = z.infer<typeof categoryWithQuizzesSchema>;
