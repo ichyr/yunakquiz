@@ -41,6 +41,12 @@ describe('quizSchema', () => {
     ['a blank title', { ...validQuiz, title: '  ' }],
     ['a slug with spaces', { ...validQuiz, slug: 'ivan bohun' }],
     ['an uppercase Category slug', { ...validQuiz, categories: [{ slug: 'Patrony', name: 'P' }] }],
+    [
+      'the same Category twice',
+      { ...validQuiz, categories: [validQuiz.categories[0], validQuiz.categories[0]] },
+    ],
+    ['a Quiz Language that is not a language tag', { ...validQuiz, language: 'uk UA' }],
+    ['a Quiz Language that is a language name', { ...validQuiz, language: 'ukrainian' }],
     ['a single Option', withQuestion({ options: [{ text: 'Невідомо', correct: true }] })],
     ['a blank prompt', withQuestion({ prompt: '' })],
     ['a blank Explanation', withQuestion({ explanation: ' ' })],

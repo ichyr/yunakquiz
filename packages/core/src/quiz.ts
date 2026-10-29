@@ -6,6 +6,18 @@ const slug = z
   .string()
   .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Use lowercase letters, digits and single hyphens');
 
+/** A BCP 47 language tag such as `uk` or `en`, so the app can name it with Intl.DisplayNames. */
+const languageTag = text.refine(
+  (tag) => {
+    try {
+      return Intl.getCanonicalLocales(tag).length === 1;
+    } catch {
+      return false;
+    }
+  },
+  { message: 'Use a language tag such as uk or en' },
+);
+
 export const categorySchema = z.object({
   slug,
   name: text,
@@ -31,8 +43,15 @@ export const quizSchema = z.object({
   slug,
   title: text,
   description: text,
-  language: text,
-  categories: z.array(categorySchema).min(1),
+  language: languageTag,
+  categories: z
+    .array(categorySchema)
+    .min(1)
+    .refine(
+      (categories) =>
+        new Set(categories.map((category) => category.slug)).size === categories.length,
+      { message: 'A Quiz lists each Category once' },
+    ),
   questions: z.array(questionSchema).min(1),
 });
 
