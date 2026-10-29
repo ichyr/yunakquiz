@@ -1,3 +1,9 @@
 packages:
   - apps/*
   - packages/*
+minimumReleaseAgeExclude:
+  - lucide-react@1.64.0
+
+# esbuild's postinstall only double-checks the platform binary that pnpm already installs.
+allowBuilds:
+  esbuild: false

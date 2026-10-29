@@ -14,7 +14,12 @@
     "typecheck": "pnpm -r typecheck",
     "db:up": "docker compose up -d --wait",
     "db:seed": "pnpm --filter @yunakquiz/api db:seed",
-    "dev:api": "pnpm --filter @yunakquiz/api dev"
+    "dev:api": "pnpm --filter @yunakquiz/api dev",
+    "check:stories": "node scripts/check-stories.mjs",
+    "dev:web": "pnpm --filter @yunakquiz/web dev",
+    "build:web": "pnpm --filter @yunakquiz/web build",
+    "storybook": "pnpm --filter @yunakquiz/web storybook",
+    "build-storybook": "pnpm --filter @yunakquiz/web build-storybook"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.4",
