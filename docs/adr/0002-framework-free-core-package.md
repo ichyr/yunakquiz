@@ -1,0 +1,3 @@
+# Quiz logic lives in a framework-free core package
+
+The repo is a pnpm workspaces monorepo: `apps/web`, `apps/api`, `packages/core`. All Quiz logic (shuffling, scoring, building the Review) and the zod schemas live in `packages/core`, as plain TypeScript with no dependency on React or the DOM. A React Native app is planned. It can reuse `core`, the schemas, the translations and the design tokens, but not the web components: shadcn/ui is built on Radix and DOM elements, so React Native will need its own component set (e.g. `react-native-reusables`). Keeping logic out of components is what makes the native app cheap later.
