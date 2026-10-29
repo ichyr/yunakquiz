@@ -25,7 +25,7 @@ The product is generic, so any scouting organisation can use it.
    - Questions and the Options within each Question are shuffled on every **Attempt**.
    - The scout can answer in any order and change answers freely. No feedback is shown during the Attempt.
    - "Finish" is available only once every Question has an answer.
-   - Leaving partway (closing the tab, navigating away) asks for confirmation, then discards the Attempt.
+   - Leaving partway (closing the tab, navigating away) asks for confirmation, then discards the Attempt. Before the first answer nothing would be lost, so leaving does not ask.
 5. **Review**: replaces the Quiz page at the same address, so it has no link of its own.
    - Shows the **Score**, e.g. `7 / 10`.
    - For every Question: the scout's chosen Option, the Correct Option highlighted, and the Explanation.
@@ -41,7 +41,7 @@ Quiz lists and search results show each Quiz's title, description and Quiz Langu
 
 ## Languages
 
-- Interface Language: Ukrainian (default) and English, through an i18n library.
+- Interface Language: Ukrainian (default) and English, through an i18n library. The app opens in Ukrainian whatever the browser's language; once a scout picks a language, that device remembers it.
 - Quiz Language is independent of the Interface Language. Scouts can use their browser's translation for Quizzes in other languages.
 
 ## Out of scope for the MVP
