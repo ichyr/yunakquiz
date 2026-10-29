@@ -14,4 +14,8 @@ export default defineConfig({
   preview: {
     proxy: { '/api': 'http://localhost:3000' },
   },
+  test: {
+    // Playwright owns e2e/.
+    include: ['src/**/*.test.{ts,tsx}'],
+  },
 });

@@ -19,7 +19,8 @@
     "dev:web": "pnpm --filter @yunakquiz/web dev",
     "build:web": "pnpm --filter @yunakquiz/web build",
     "storybook": "pnpm --filter @yunakquiz/web storybook",
-    "build-storybook": "pnpm --filter @yunakquiz/web build-storybook"
+    "build-storybook": "pnpm --filter @yunakquiz/web build-storybook",
+    "test:e2e": "pnpm --filter @yunakquiz/web test:e2e"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.4",
