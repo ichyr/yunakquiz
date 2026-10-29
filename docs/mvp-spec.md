@@ -55,4 +55,4 @@ Quiz lists and search results show each Quiz's title, description and Quiz Langu
 
 - One TypeScript file per Quiz, checked against the shared zod schema.
 - Loaded by a seed script that can be rerun safely.
-- First Quiz: "Іван Богун", in Categories "Патрони куренів" and "Історія України".
+- First Quiz: "Іван Богун" (Quiz Language `uk`), in Categories "Патрони куренів" and "Історія України". Editorial source: [docs/content/ivan-bohun.md](content/ivan-bohun.md).

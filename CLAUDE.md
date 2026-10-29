@@ -24,7 +24,11 @@ pnpm workspaces monorepo:
 
 ## Commits
 
-Commit messages follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/): `<type>(<optional scope>): <description>`. Types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`. Scopes match the workspace: `web`, `api`, `core`, `seed`. Breaking changes use `!` after the type/scope or a `BREAKING CHANGE:` footer.
+Commit messages follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/): `<type>(<optional scope>): <description>`. Types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`. Scopes match the workspace: `web`, `api`, `core`, `seed`. Breaking changes use `!` after the type/scope or a `BREAKING CHANGE:` footer. Enforced by commitlint: locally through a Husky `commit-msg` hook, and in CI.
+
+## Roadmap
+
+Post-MVP work is tracked as GitHub Issues labelled `roadmap`; content fixes are labelled `content`.
 
 ## Testing
 
