@@ -15,3 +15,10 @@ fnm install          # Node version from .node-version
 corepack enable      # pnpm version from package.json
 pnpm install         # also installs the commit-msg hook
 ```
+
+## Checks
+
+- `pnpm lint`: [oxlint](https://oxc.rs/docs/guide/usage/linter), chosen for speed. It has no type-aware rules, so type errors are caught by `pnpm typecheck` (`tsc --noEmit`) instead.
+- `pnpm format` / `pnpm format:check`: Prettier.
+- `pnpm test`: unit and API tests across the workspace.
+- Every web component, including installed shadcn/ui primitives, needs a Storybook story; a check script in CI enforces this.

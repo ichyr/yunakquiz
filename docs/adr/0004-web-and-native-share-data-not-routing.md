@@ -1,0 +1,5 @@
+# Web and native apps share data code, not routing
+
+`apps/web` uses React Router for routing and TanStack Query for fetching. No web router carries over to React Native: React Router v7 dropped `react-router-native`, TanStack Router has no native support, and Expo Router on the web would rule out shadcn/ui (see ADR 0002). So the native app will use Expo Router, and what the two apps share is everything below the screens: the zod schemas and Quiz logic in `packages/core`, the API client and TanStack Query hooks, the translations, and the URL shape. Web URLs (`/categories/:slug`, `/quizzes/:slug`) mirror Expo Router file paths (`app/quizzes/[slug].tsx`), so a shared link can open the same screen in the app.
+
+API response schemas live in `packages/core` from the start because the API uses them too. The fetchers and Query hooks stay in `apps/web/src/api/` for now; route components stay thin (read params, call a hook) so the hooks can move into a shared package when the native app starts, not before.
