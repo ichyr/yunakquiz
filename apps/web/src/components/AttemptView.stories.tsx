@@ -35,11 +35,9 @@ export const ReadyToFinish: Story = {
 /** Answers are tracked by the real hook; Finish logs to Actions. */
 export const Interactive: Story = {
   render: function Render(args) {
-    const session = useAttempt(sampleQuiz);
+    const { attempt, choose } = useAttempt(sampleQuiz);
     // Finish only logs here, so the Attempt never leaves the answering phase.
-    if (session.attempt.phase !== 'answering') return <></>;
-    return (
-      <AttemptView attempt={session.attempt} onChoose={session.choose} onFinish={args.onFinish} />
-    );
+    if (attempt.phase !== 'answering') return <></>;
+    return <AttemptView attempt={attempt} onChoose={choose} onFinish={args.onFinish} />;
   },
 };
