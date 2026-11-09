@@ -150,17 +150,27 @@ A Quiz's Questions, Options and Explanations SHALL be stored together as one doc
 
 ### Requirement: Rerunnable seed
 
-The seed SHALL load one file per Quiz from the repository, validate every Quiz before writing anything, and insert or update each Quiz and its Categories by slug in one transaction. Running it again SHALL be safe. The seed applies pending database migrations first.
+The seed SHALL load one file per Quiz from the repository, validate every Quiz before writing anything, and insert or update each Quiz and its Categories by slug in one transaction. Running it again SHALL be safe. After a run the database SHALL hold exactly the Quizzes in the seed files and the Categories they use, and the seed SHALL report how many Quizzes it added, updated and removed. The seed applies pending database migrations first.
 
 #### Scenario: Rerun updates a Quiz and its Categories
 
 - **WHEN** the seed runs again with a changed title and a different Category list for an existing slug
 - **THEN** the Quiz has the new title and belongs only to the new Categories
 
+#### Scenario: Removed Quiz file withdraws the Quiz
+
+- **WHEN** the seed runs without a Quiz that an earlier run loaded
+- **THEN** that Quiz is removed, it is missing from search and Category lists, and its address shows "Quiz not found"
+
+#### Scenario: Unused Category is removed
+
+- **WHEN** the seed runs and no Quiz lists a Category any more
+- **THEN** the Category is removed
+
 #### Scenario: Invalid Quiz stops the whole seed
 
 - **WHEN** one Quiz in a seed run breaks the content rules
-- **THEN** the seed fails and no Quiz in that run is written or changed
+- **THEN** the seed fails and no Quiz in that run is written, changed or removed
 
 ### Requirement: First Quiz
 
