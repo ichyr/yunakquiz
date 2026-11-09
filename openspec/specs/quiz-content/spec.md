@@ -32,17 +32,32 @@ A Quiz SHALL have a slug, a title, a description, one Quiz Language, at least on
 
 ### Requirement: Quiz Language is a language tag
 
-A Quiz's Quiz Language SHALL be a BCP 47 language tag such as `uk`, `en` or `uk-UA`, so the app can name it in any Interface Language.
+A Quiz's Quiz Language SHALL be a single BCP 47 language tag such as `uk`, `en` or `uk-UA` that the app can name as a language in any Interface Language. The Quiz schema SHALL store it in standard spelling. An error for a rejected Quiz Language SHALL name the value written and suggest a tag such as `uk` or `en`.
 
 #### Scenario: Language tag is accepted
 
 - **WHEN** a Quiz's Quiz Language is `uk`
 - **THEN** the Quiz schema accepts it
 
+#### Scenario: Regional tag is accepted
+
+- **WHEN** a Quiz's Quiz Language is `uk-UA`
+- **THEN** the Quiz schema accepts it
+
 #### Scenario: Language name or malformed tag is rejected
 
-- **WHEN** a Quiz's Quiz Language is `ukrainian` or `uk UA`
+- **WHEN** a Quiz's Quiz Language is `english` or `uk UA`
+- **THEN** the Quiz schema rejects it, and the error names the value
+
+#### Scenario: Tag the app cannot name is rejected
+
+- **WHEN** a Quiz's Quiz Language is `xx`
 - **THEN** the Quiz schema rejects it
+
+#### Scenario: Standard spelling
+
+- **WHEN** a Quiz's Quiz Language is written `UK` or `en-us`
+- **THEN** the parsed Quiz has the Quiz Language `uk` or `en-US`
 
 ### Requirement: Slugs
 
@@ -70,7 +85,16 @@ A Category SHALL have a slug and a non-blank name and no parent. A Quiz MAY belo
 #### Scenario: Same Category listed twice
 
 - **WHEN** a Quiz lists the same Category slug twice
-- **THEN** the Quiz schema rejects it, before the seed writes anything
+- **THEN** the Quiz schema rejects it, before the seed writes anything, and the error names the repeated slug and points at the repeated entry
+
+### Requirement: Category names agree across Quizzes
+
+A Category slug SHALL have one name across all Quizzes in a seed run, so a Category's name never depends on seed order.
+
+#### Scenario: Two Quizzes name one Category differently
+
+- **WHEN** two Quizzes in one seed run give the same Category slug different names
+- **THEN** the seed fails before writing anything, and the error names the slug and both names
 
 ### Requirement: Question structure
 
