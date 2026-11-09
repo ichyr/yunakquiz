@@ -22,7 +22,7 @@ export interface Attempt {
   /** Questions in the order shown for this Attempt. */
   questions: AttemptQuestion[];
   /** Chosen Option id, keyed by Question id. */
-  answers: Record<number, number>;
+  chosenOptions: Record<number, number>;
 }
 
 export function startAttempt(quiz: Quiz, random: RandomSource = Math.random): Attempt {
@@ -38,7 +38,7 @@ export function startAttempt(quiz: Quiz, random: RandomSource = Math.random): At
         random,
       ),
     })),
-    answers: {},
+    chosenOptions: {},
   };
 }
 
@@ -53,15 +53,25 @@ function shuffle<T>(items: readonly T[], random: RandomSource): T[] {
 }
 
 /** Records the scout's chosen Option for a Question, replacing any earlier choice. */
-export function answer(attempt: Attempt, questionId: number, optionId: number): Attempt {
+export function chooseOption(attempt: Attempt, questionId: number, optionId: number): Attempt {
   const question = attempt.questions.find((candidate) => candidate.id === questionId);
   if (!question?.options.some((option) => option.id === optionId)) {
     throw new Error(`Option ${optionId} is not part of Question ${questionId}`);
   }
-  return { ...attempt, answers: { ...attempt.answers, [questionId]: optionId } };
+  return { ...attempt, chosenOptions: { ...attempt.chosenOptions, [questionId]: optionId } };
 }
 
-/** "Finish" is available only once every Question has an answer. */
+/** How many Questions have a chosen Option. */
+export function answeredCount(attempt: Attempt): number {
+  return Object.keys(attempt.chosenOptions).length;
+}
+
+/** "Finish" is available only once every Question has a chosen Option. */
 export function canFinish(attempt: Attempt): boolean {
-  return attempt.questions.every((question) => question.id in attempt.answers);
+  return attempt.questions.every((question) => question.id in attempt.chosenOptions);
+}
+
+/** True while the scout has chosen Options that leaving would discard. */
+export function isInProgress(attempt: Attempt, finished: boolean): boolean {
+  return !finished && answeredCount(attempt) > 0;
 }

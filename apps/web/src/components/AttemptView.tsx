@@ -36,7 +36,7 @@ export function AttemptView({
               number={index + 1}
               total={total}
               language={quiz.language}
-              chosenOptionId={attempt.answers[question.id]}
+              chosenOptionId={attempt.chosenOptions[question.id]}
               onChoose={(optionId) => onChoose(question.id, optionId)}
             />
           </li>

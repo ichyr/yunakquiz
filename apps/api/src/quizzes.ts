@@ -3,6 +3,8 @@ import { and, asc, eq, exists, ilike, or } from 'drizzle-orm';
 import type { Db } from './db/client.ts';
 import { categories, quizCategories, quizzes } from './db/schema.ts';
 
+const categoryColumns = { slug: categories.slug, name: categories.name };
+
 const summaryColumns = {
   slug: quizzes.slug,
   title: quizzes.title,
@@ -13,7 +15,7 @@ const summaryColumns = {
 /** Categories that contain at least one Quiz. */
 export function listCategories(db: Db): Promise<Category[]> {
   return db
-    .select({ slug: categories.slug, name: categories.name })
+    .select(categoryColumns)
     .from(categories)
     .where(
       exists(db.select().from(quizCategories).where(eq(quizCategories.categoryId, categories.id))),
@@ -23,7 +25,7 @@ export function listCategories(db: Db): Promise<Category[]> {
 
 export async function findCategory(db: Db, slug: string): Promise<CategoryWithQuizzes | null> {
   const [category] = await db
-    .select({ id: categories.id, slug: categories.slug, name: categories.name })
+    .select({ id: categories.id, ...categoryColumns })
     .from(categories)
     .where(eq(categories.slug, slug));
   if (!category) return null;
@@ -55,7 +57,7 @@ export async function findQuiz(db: Db, slug: string): Promise<Quiz | null> {
   if (!quiz) return null;
 
   const quizCategoryRows = await db
-    .select({ slug: categories.slug, name: categories.name })
+    .select(categoryColumns)
     .from(categories)
     .innerJoin(
       quizCategories,

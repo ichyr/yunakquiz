@@ -5,6 +5,11 @@ export interface Score {
   total: number;
 }
 
+/** Every Question answered correctly. */
+export function isPerfect(score: Score): boolean {
+  return score.correct === score.total;
+}
+
 export interface ReviewItem {
   questionId: number;
   prompt: string;
@@ -29,7 +34,7 @@ export function buildReview(attempt: Attempt): Review {
 
   const items = attempt.questions.map((question): ReviewItem => {
     const source = attempt.quiz.questions[question.id]!;
-    const chosenOptionId = attempt.answers[question.id]!;
+    const chosenOptionId = attempt.chosenOptions[question.id]!;
     const correctOptionId = source.options.findIndex((option) => option.correct);
     return {
       questionId: question.id,

@@ -8,7 +8,7 @@
 ## 2. Core
 
 - [x] 2.1 Quiz schemas for content rules and API responses
-- [x] 2.2 Attempt: shuffle, answer, canFinish
+- [x] 2.2 Attempt: shuffle, chooseOption, canFinish
 - [x] 2.3 Review: Score and per-Question items
 - [x] 2.4 Explanation paragraph splitting
 - [x] 2.5 Unit tests for all of the above

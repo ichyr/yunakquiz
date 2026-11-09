@@ -15,34 +15,34 @@ export function QuizPage() {
   const quiz = useQuiz(slug);
 
   // Checked first, so a failed background refetch never throws away an Attempt.
-  if (quiz.data) return <QuizSession key={slug} quiz={quiz.data} />;
+  if (quiz.data) return <QuizAttempt key={slug} quiz={quiz.data} />;
   return <QueryFallback query={quiz} notFoundTitle={t('status.quizNotFound')} />;
 }
 
 /** The Attempt, then its Review at the same address. */
-function QuizSession({ quiz }: { quiz: Quiz }) {
-  const session = useAttempt(quiz);
-  const blocker = useLeaveGuard(session.inProgress);
+function QuizAttempt({ quiz }: { quiz: Quiz }) {
+  const attempt = useAttempt(quiz);
+  const blocker = useLeaveGuard(attempt.inProgress);
 
   return (
     <>
-      {session.review ? (
+      {attempt.review ? (
         <ReviewView
           quiz={quiz}
-          review={session.review}
+          review={attempt.review}
           onTryAgain={() => {
-            session.tryAgain();
+            attempt.tryAgain();
             window.scrollTo({ top: 0 });
           }}
         />
       ) : (
         <AttemptView
-          attempt={session.attempt}
-          answeredCount={session.answeredCount}
-          canFinish={session.canFinish}
-          onChoose={session.choose}
+          attempt={attempt.attempt}
+          answeredCount={attempt.answeredCount}
+          canFinish={attempt.canFinish}
+          onChoose={attempt.choose}
           onFinish={() => {
-            session.finish();
+            attempt.finish();
             window.scrollTo({ top: 0 });
           }}
         />

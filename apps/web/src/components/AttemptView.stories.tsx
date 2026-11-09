@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { answer } from '@yunakquiz/core';
+import { chooseOption } from '@yunakquiz/core';
 import { fn } from 'storybook/test';
 import { sampleAttempt, sampleQuiz } from '@/fixtures';
 import { useAttempt } from '@/quiz/useAttempt';
@@ -25,12 +25,12 @@ type Story = StoryObj<typeof meta>;
 export const Unanswered: Story = {};
 
 export const PartlyAnswered: Story = {
-  args: { attempt: answer(sampleAttempt(), 0, 0), answeredCount: 1 },
+  args: { attempt: chooseOption(sampleAttempt(), 0, 0), answeredCount: 1 },
 };
 
 export const ReadyToFinish: Story = {
   args: {
-    attempt: answer(answer(answer(sampleAttempt(), 0, 0), 1, 1), 2, 1),
+    attempt: chooseOption(chooseOption(chooseOption(sampleAttempt(), 0, 0), 1, 1), 2, 1),
     answeredCount: 3,
     canFinish: true,
   },

@@ -1,8 +1,8 @@
 import type { AttemptQuestion } from '@yunakquiz/core';
 import { useId } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { QuestionHeader } from './QuestionHeader.tsx';
 
 interface QuestionFieldProps {
   question: AttemptQuestion;
@@ -22,19 +22,17 @@ export function QuestionField({
   chosenOptionId,
   onChoose,
 }: QuestionFieldProps) {
-  const { t } = useTranslation();
   const promptId = useId();
 
   return (
     <Card className="gap-4">
-      <CardHeader className="gap-1">
-        <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-          {t('attempt.question', { number, total })}
-        </p>
-        <h2 id={promptId} lang={language} className="text-base leading-snug font-semibold">
-          {question.prompt}
-        </h2>
-      </CardHeader>
+      <QuestionHeader
+        prompt={question.prompt}
+        number={number}
+        total={total}
+        language={language}
+        promptId={promptId}
+      />
       <CardContent>
         <RadioGroup
           aria-labelledby={promptId}
