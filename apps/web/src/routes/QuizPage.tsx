@@ -26,10 +26,9 @@ function QuizAttempt({ quiz }: { quiz: Quiz }) {
 
   return (
     <>
-      {attempt.review ? (
+      {attempt.attempt.phase === 'reviewed' ? (
         <ReviewView
-          quiz={quiz}
-          review={attempt.review}
+          attempt={attempt.attempt}
           onTryAgain={() => {
             attempt.tryAgain();
             window.scrollTo({ top: 0 });
@@ -38,8 +37,6 @@ function QuizAttempt({ quiz }: { quiz: Quiz }) {
       ) : (
         <AttemptView
           attempt={attempt.attempt}
-          answeredCount={attempt.answeredCount}
-          canFinish={attempt.canFinish}
           onChoose={attempt.choose}
           onFinish={() => {
             attempt.finish();

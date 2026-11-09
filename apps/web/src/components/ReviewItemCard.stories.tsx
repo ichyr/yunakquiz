@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { sampleReview } from '@/fixtures';
+import { sampleReviewedAttempt } from '@/fixtures';
 import { ReviewItemCard } from './ReviewItemCard.tsx';
 
-const [incorrect, correct] = sampleReview().items;
+const [incorrect, correct] = sampleReviewedAttempt().review.items;
 
 const meta = {
   title: 'Review/ReviewItemCard',

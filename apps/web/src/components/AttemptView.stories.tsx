@@ -12,8 +12,6 @@ const meta = {
   decorators: [(Story) => <div className="mx-auto max-w-2xl p-4">{Story()}</div>],
   args: {
     attempt: sampleAttempt(),
-    answeredCount: 0,
-    canFinish: false,
     onChoose: fn(),
     onFinish: fn(),
   },
@@ -25,14 +23,12 @@ type Story = StoryObj<typeof meta>;
 export const Unanswered: Story = {};
 
 export const PartlyAnswered: Story = {
-  args: { attempt: chooseOption(sampleAttempt(), 0, 0), answeredCount: 1 },
+  args: { attempt: chooseOption(sampleAttempt(), 0, 0) },
 };
 
 export const ReadyToFinish: Story = {
   args: {
     attempt: chooseOption(chooseOption(chooseOption(sampleAttempt(), 0, 0), 1, 1), 2, 1),
-    answeredCount: 3,
-    canFinish: true,
   },
 };
 
@@ -40,14 +36,10 @@ export const ReadyToFinish: Story = {
 export const Interactive: Story = {
   render: function Render(args) {
     const session = useAttempt(sampleQuiz);
+    // Finish only logs here, so the Attempt never leaves the answering phase.
+    if (session.attempt.phase !== 'answering') return <></>;
     return (
-      <AttemptView
-        attempt={session.attempt}
-        answeredCount={session.answeredCount}
-        canFinish={session.canFinish}
-        onChoose={session.choose}
-        onFinish={args.onFinish}
-      />
+      <AttemptView attempt={session.attempt} onChoose={session.choose} onFinish={args.onFinish} />
     );
   },
 };

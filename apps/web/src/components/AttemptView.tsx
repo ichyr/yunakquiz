@@ -1,28 +1,21 @@
-import type { Attempt } from '@yunakquiz/core';
+import { answeredCount, canFinish, type AnsweringAttempt } from '@yunakquiz/core';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { QuestionField } from './QuestionField.tsx';
 import { QuizHeader } from './QuizHeader.tsx';
 
 interface AttemptViewProps {
-  attempt: Attempt;
-  answeredCount: number;
-  canFinish: boolean;
+  attempt: AnsweringAttempt;
   onChoose: (questionId: number, optionId: number) => void;
   onFinish: () => void;
 }
 
 /** All Questions on one page, no feedback until Finish. */
-export function AttemptView({
-  attempt,
-  answeredCount,
-  canFinish,
-  onChoose,
-  onFinish,
-}: AttemptViewProps) {
+export function AttemptView({ attempt, onChoose, onFinish }: AttemptViewProps) {
   const { t } = useTranslation();
   const { quiz, questions } = attempt;
   const total = questions.length;
+  const ready = canFinish(attempt);
 
   return (
     <div className="flex flex-col gap-6">
@@ -46,11 +39,11 @@ export function AttemptView({
       <div className="sticky bottom-0 -mx-4 flex items-center justify-between gap-4 border-t bg-background/95 px-4 py-3 backdrop-blur">
         <div className="flex flex-col text-sm">
           <p aria-live="polite" className="font-medium tabular-nums">
-            {t('attempt.progress', { answered: answeredCount, total })}
+            {t('attempt.progress', { answered: answeredCount(attempt), total })}
           </p>
-          {!canFinish && <p className="text-xs text-muted-foreground">{t('attempt.finishHint')}</p>}
+          {!ready && <p className="text-xs text-muted-foreground">{t('attempt.finishHint')}</p>}
         </div>
-        <Button size="lg" disabled={!canFinish} onClick={onFinish}>
+        <Button size="lg" disabled={!ready} onClick={onFinish}>
           {t('attempt.finish')}
         </Button>
       </div>
