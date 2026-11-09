@@ -1,14 +1,9 @@
 import type { Category, CategoryWithQuizzes, Quiz, QuizSummary } from '@yunakquiz/core';
-import { and, eq, exists, ilike, or, sql, type SQL } from 'drizzle-orm';
+import { and, asc, eq, exists, ilike, or } from 'drizzle-orm';
 import type { Db } from './db/client.ts';
 import { categories, quizCategories, quizzes } from './db/schema.ts';
 
-/**
- * Lists follow Ukrainian alphabetical order (а б в г ґ д е є ж з и і ї й …) whatever the server's
- * default collation. The Compose image's musl libc sorts by code point, which puts і, ї, є and ґ
- * in the wrong place. An explicit ICU collation behaves the same locally, in CI and on AWS.
- */
-const alphabetical = (column: Parameters<typeof sql>[1]): SQL => sql`${column} collate "uk-x-icu"`;
+const categoryColumns = { slug: categories.slug, name: categories.name };
 
 const summaryColumns = {
   slug: quizzes.slug,
@@ -20,17 +15,17 @@ const summaryColumns = {
 /** Categories that contain at least one Quiz. */
 export function listCategories(db: Db): Promise<Category[]> {
   return db
-    .select({ slug: categories.slug, name: categories.name })
+    .select(categoryColumns)
     .from(categories)
     .where(
       exists(db.select().from(quizCategories).where(eq(quizCategories.categoryId, categories.id))),
     )
-    .orderBy(alphabetical(categories.name));
+    .orderBy(asc(categories.name));
 }
 
 export async function findCategory(db: Db, slug: string): Promise<CategoryWithQuizzes | null> {
   const [category] = await db
-    .select({ id: categories.id, slug: categories.slug, name: categories.name })
+    .select({ id: categories.id, ...categoryColumns })
     .from(categories)
     .where(eq(categories.slug, slug));
   if (!category) return null;
@@ -42,7 +37,7 @@ export async function findCategory(db: Db, slug: string): Promise<CategoryWithQu
       quizCategories,
       and(eq(quizCategories.quizId, quizzes.id), eq(quizCategories.categoryId, category.id)),
     )
-    .orderBy(alphabetical(quizzes.title));
+    .orderBy(asc(quizzes.title));
 
   return { category: { slug: category.slug, name: category.name }, quizzes: categoryQuizzes };
 }
@@ -54,7 +49,7 @@ export function searchQuizzes(db: Db, query: string): Promise<QuizSummary[]> {
     .select(summaryColumns)
     .from(quizzes)
     .where(or(ilike(quizzes.title, pattern), ilike(quizzes.description, pattern)))
-    .orderBy(alphabetical(quizzes.title));
+    .orderBy(asc(quizzes.title));
 }
 
 export async function findQuiz(db: Db, slug: string): Promise<Quiz | null> {
@@ -62,13 +57,13 @@ export async function findQuiz(db: Db, slug: string): Promise<Quiz | null> {
   if (!quiz) return null;
 
   const quizCategoryRows = await db
-    .select({ slug: categories.slug, name: categories.name })
+    .select(categoryColumns)
     .from(categories)
     .innerJoin(
       quizCategories,
       and(eq(quizCategories.categoryId, categories.id), eq(quizCategories.quizId, quiz.id)),
     )
-    .orderBy(alphabetical(categories.name));
+    .orderBy(asc(categories.name));
 
   return {
     slug: quiz.slug,

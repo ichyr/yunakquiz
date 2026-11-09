@@ -17,7 +17,7 @@ The REST + JSON API under `/api` that the web app reads. It is read-only. It ret
 
 ### Requirement: Ukrainian alphabetical order
 
-Every list ordered by name or title SHALL follow Ukrainian alphabetical order (а б в г ґ д е є ж з и і ї й …), with Ukrainian letters before Latin ones, whatever the database's default collation. The order is the same whatever the scout's Interface Language.
+Every list ordered by name or title SHALL follow Ukrainian alphabetical order (а б в г ґ д е є ж з и і ї й …), with Ukrainian letters before Latin ones, because the database is created with the ICU locale provider and the `uk-UA` locale (`LOCALE_PROVIDER icu ICU_LOCALE 'uk-UA'`), not by annotating each query. The order is the same whatever the scout's Interface Language.
 
 #### Scenario: Letters outside the code-point order
 

@@ -5,6 +5,9 @@ services:
       POSTGRES_USER: yunakquiz
       POSTGRES_PASSWORD: yunakquiz
       POSTGRES_DB: yunakquiz
+      # Ukrainian alphabetical order (а б в г ґ д е є ж з и і ї й …) for every ORDER BY, whatever the
+      # image's libc. Same flags as CI; on AWS create the database WITH LOCALE_PROVIDER icu ICU_LOCALE 'uk-UA'.
+      POSTGRES_INITDB_ARGS: --locale-provider=icu --icu-locale=uk-UA
     ports:
       - '5432:5432'
     volumes:
