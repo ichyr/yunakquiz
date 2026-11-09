@@ -1,4 +1,4 @@
-import { quizSchema, type QuizInput } from '@yunakquiz/core';
+import { quizSchema, type Quiz, type QuizInput } from '@yunakquiz/core';
 import { eq, notExists, notInArray, sql } from 'drizzle-orm';
 import type { Db } from '../src/db/client.ts';
 import { categories, quizCategories, quizzes } from '../src/db/schema.ts';
@@ -13,10 +13,12 @@ export interface SeedResult {
  * Makes the database hold exactly these Quizzes and the Categories they use: inserts or updates
  * each Quiz by slug, with its Categories, then removes Quizzes missing from `inputs` and
  * Categories no Quiz uses. Safe to rerun.
- * Throws before writing anything if a Quiz breaks the content rules.
+ * Throws before writing anything if a Quiz breaks the content rules, or if two Quizzes give
+ * one Category slug different names.
  */
 export async function seed(db: Db, inputs: QuizInput[]): Promise<SeedResult> {
   const parsed = inputs.map((input) => quizSchema.parse(input));
+  assertConsistentCategoryNames(parsed);
 
   return db.transaction(async (tx) => {
     const existing = new Set(
@@ -69,4 +71,21 @@ export async function seed(db: Db, inputs: QuizInput[]): Promise<SeedResult> {
 
     return { added, updated: parsed.length - added, removed: removedRows.length };
   });
+}
+
+/** A Category's name must not depend on which Quiz the seed happens to write last. */
+function assertConsistentCategoryNames(parsedQuizzes: Quiz[]) {
+  const names = new Map<string, { name: string; quiz: string }>();
+  for (const quiz of parsedQuizzes) {
+    for (const { slug, name } of quiz.categories) {
+      const first = names.get(slug);
+      if (first === undefined) {
+        names.set(slug, { name, quiz: quiz.slug });
+      } else if (first.name !== name) {
+        throw new Error(
+          `Category "${slug}" is named "${first.name}" in Quiz "${first.quiz}" but "${name}" in Quiz "${quiz.slug}"`,
+        );
+      }
+    }
+  }
 }

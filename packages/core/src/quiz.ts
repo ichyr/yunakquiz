@@ -6,17 +6,28 @@ const slug = z
   .string()
   .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Use lowercase letters, digits and single hyphens');
 
-/** A BCP 47 language tag such as `uk` or `en`, so the app can name it with Intl.DisplayNames. */
-const languageTag = text.refine(
-  (tag) => {
-    try {
-      return Intl.getCanonicalLocales(tag).length === 1;
-    } catch {
-      return false;
-    }
-  },
-  { message: 'Use a language tag such as uk or en' },
-);
+const languageNames = new Intl.DisplayNames('en', { type: 'language', fallback: 'none' });
+
+/**
+ * A BCP 47 language tag such as `uk` or `en-US` that the app can name with Intl.DisplayNames.
+ * Parsed into its standard spelling, so `UK` becomes `uk` and `en-us` becomes `en-US`.
+ */
+const languageTag = text.transform((value, context) => {
+  const rejected = `Quiz Language "${value}" is not a language the app can name. Use a tag such as uk or en`;
+  let tag: string | undefined;
+  try {
+    const tags = Intl.getCanonicalLocales(value);
+    tag = tags.length === 1 ? tags[0] : undefined;
+    if (tag !== undefined && languageNames.of(tag) === undefined) tag = undefined;
+  } catch {
+    tag = undefined;
+  }
+  if (tag === undefined) {
+    context.addIssue({ code: 'custom', message: rejected });
+    return z.NEVER;
+  }
+  return tag;
+});
 
 export const categorySchema = z.object({
   slug,
@@ -47,11 +58,19 @@ export const quizSchema = z.object({
   categories: z
     .array(categorySchema)
     .min(1)
-    .refine(
-      (categories) =>
-        new Set(categories.map((category) => category.slug)).size === categories.length,
-      { message: 'A Quiz lists each Category once' },
-    ),
+    .superRefine((categories, context) => {
+      const seen = new Set<string>();
+      categories.forEach((category, index) => {
+        if (seen.has(category.slug)) {
+          context.addIssue({
+            code: 'custom',
+            message: `A Quiz lists each Category once, but "${category.slug}" is repeated`,
+            path: [index],
+          });
+        }
+        seen.add(category.slug);
+      });
+    }),
   questions: z.array(questionSchema).min(1),
 });
 
