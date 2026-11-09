@@ -19,7 +19,7 @@ pnpm workspaces monorepo:
 - Quiz logic (shuffling, scoring, building the Review) goes in `packages/core`, never in components or route handlers. See ADR 0002.
 - The API returns Correct Options and Explanations; checking happens in the browser. See ADR 0001.
 - Every Interface Language string goes through i18n. Quiz content is never translated by the app.
-- Every web component has a Storybook story. Colours, spacing and fonts are shown in Storybook too.
+- Every web component has a Storybook story; route pages, which only read params and call hooks, are exempt. `pnpm check:stories` enforces it. Colours, spacing and fonts are shown in Storybook too.
 - Keep everything container-friendly; AWS deployment is planned but not part of the MVP.
 
 ## Commits

@@ -4,7 +4,7 @@ import { useQuizSearch } from '@/api/queries';
 import { PageMessage } from '@/components/PageMessage';
 import { QuizList } from '@/components/QuizList';
 import { SearchForm } from '@/components/SearchForm';
-import { QueryFallback } from './QueryFallback.tsx';
+import { QueryFallback } from '@/components/QueryFallback';
 import { useSearchNavigation } from './useSearchNavigation.ts';
 
 export function SearchPage() {

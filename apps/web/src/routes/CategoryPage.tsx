@@ -3,7 +3,7 @@ import { useParams } from 'react-router';
 import { useCategory } from '@/api/queries';
 import { PageMessage } from '@/components/PageMessage';
 import { QuizList } from '@/components/QuizList';
-import { QueryFallback } from './QueryFallback.tsx';
+import { QueryFallback } from '@/components/QueryFallback';
 
 export function CategoryPage() {
   const { t } = useTranslation();
