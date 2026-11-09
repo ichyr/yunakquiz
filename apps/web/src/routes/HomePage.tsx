@@ -3,7 +3,7 @@ import { useCategories } from '@/api/queries';
 import { CategoryList } from '@/components/CategoryList';
 import { PageMessage } from '@/components/PageMessage';
 import { SearchForm } from '@/components/SearchForm';
-import { QueryFallback } from './QueryFallback.tsx';
+import { QueryFallback } from '@/components/QueryFallback';
 import { useSearchNavigation } from './useSearchNavigation.ts';
 
 export function HomePage() {

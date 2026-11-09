@@ -5,9 +5,9 @@ import { useQuiz } from '@/api/queries';
 import { AttemptView } from '@/components/AttemptView';
 import { LeaveAttemptDialog } from '@/components/LeaveAttemptDialog';
 import { ReviewView } from '@/components/ReviewView';
+import { QueryFallback } from '@/components/QueryFallback';
 import { useAttempt } from '@/quiz/useAttempt';
 import { useLeaveGuard } from '@/quiz/useLeaveGuard';
-import { QueryFallback } from './QueryFallback.tsx';
 
 export function QuizPage() {
   const { t } = useTranslation();
