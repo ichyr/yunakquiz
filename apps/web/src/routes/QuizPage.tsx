@@ -21,25 +21,25 @@ export function QuizPage() {
 
 /** The Attempt, then its Review at the same address. */
 function QuizAttempt({ quiz }: { quiz: Quiz }) {
-  const attempt = useAttempt(quiz);
-  const blocker = useLeaveGuard(attempt.inProgress);
+  const { attempt, inProgress, choose, finish, tryAgain } = useAttempt(quiz);
+  const blocker = useLeaveGuard(inProgress);
 
   return (
     <>
-      {attempt.attempt.phase === 'reviewed' ? (
+      {attempt.phase === 'reviewed' ? (
         <ReviewView
-          attempt={attempt.attempt}
+          attempt={attempt}
           onTryAgain={() => {
-            attempt.tryAgain();
+            tryAgain();
             window.scrollTo({ top: 0 });
           }}
         />
       ) : (
         <AttemptView
-          attempt={attempt.attempt}
-          onChoose={attempt.choose}
+          attempt={attempt}
+          onChoose={choose}
           onFinish={() => {
-            attempt.finish();
+            finish();
             window.scrollTo({ top: 0 });
           }}
         />
