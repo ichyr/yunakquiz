@@ -1,7 +1,14 @@
 import type { Category, CategoryWithQuizzes, Quiz, QuizSummary } from '@yunakquiz/core';
-import { and, asc, eq, exists, ilike, or } from 'drizzle-orm';
+import { and, eq, exists, ilike, or, sql, type SQL } from 'drizzle-orm';
 import type { Db } from './db/client.ts';
 import { categories, quizCategories, quizzes } from './db/schema.ts';
+
+/**
+ * Lists follow Ukrainian alphabetical order (а б в г ґ д е є ж з и і ї й …) whatever the server's
+ * default collation. The Compose image's musl libc sorts by code point, which puts і, ї, є and ґ
+ * in the wrong place. An explicit ICU collation behaves the same locally, in CI and on AWS.
+ */
+const alphabetical = (column: Parameters<typeof sql>[1]): SQL => sql`${column} collate "uk-x-icu"`;
 
 const summaryColumns = {
   slug: quizzes.slug,
@@ -18,7 +25,7 @@ export function listCategories(db: Db): Promise<Category[]> {
     .where(
       exists(db.select().from(quizCategories).where(eq(quizCategories.categoryId, categories.id))),
     )
-    .orderBy(asc(categories.name));
+    .orderBy(alphabetical(categories.name));
 }
 
 export async function findCategory(db: Db, slug: string): Promise<CategoryWithQuizzes | null> {
@@ -35,7 +42,7 @@ export async function findCategory(db: Db, slug: string): Promise<CategoryWithQu
       quizCategories,
       and(eq(quizCategories.quizId, quizzes.id), eq(quizCategories.categoryId, category.id)),
     )
-    .orderBy(asc(quizzes.title));
+    .orderBy(alphabetical(quizzes.title));
 
   return { category: { slug: category.slug, name: category.name }, quizzes: categoryQuizzes };
 }
@@ -47,7 +54,7 @@ export function searchQuizzes(db: Db, query: string): Promise<QuizSummary[]> {
     .select(summaryColumns)
     .from(quizzes)
     .where(or(ilike(quizzes.title, pattern), ilike(quizzes.description, pattern)))
-    .orderBy(asc(quizzes.title));
+    .orderBy(alphabetical(quizzes.title));
 }
 
 export async function findQuiz(db: Db, slug: string): Promise<Quiz | null> {
@@ -61,7 +68,7 @@ export async function findQuiz(db: Db, slug: string): Promise<Quiz | null> {
       quizCategories,
       and(eq(quizCategories.categoryId, categories.id), eq(quizCategories.quizId, quiz.id)),
     )
-    .orderBy(asc(categories.name));
+    .orderBy(alphabetical(categories.name));
 
   return {
     slug: quiz.slug,
