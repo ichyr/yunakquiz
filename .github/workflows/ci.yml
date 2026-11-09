@@ -36,6 +36,7 @@ jobs:
           POSTGRES_USER: yunakquiz
           POSTGRES_PASSWORD: yunakquiz
           POSTGRES_DB: yunakquiz_test
+          POSTGRES_INITDB_ARGS: --locale-provider=icu --icu-locale=uk-UA
         ports:
           - 5432:5432
         options: >-
@@ -64,6 +65,7 @@ jobs:
           POSTGRES_USER: yunakquiz
           POSTGRES_PASSWORD: yunakquiz
           POSTGRES_DB: yunakquiz
+          POSTGRES_INITDB_ARGS: --locale-provider=icu --icu-locale=uk-UA
         ports:
           - 5432:5432
         options: >-

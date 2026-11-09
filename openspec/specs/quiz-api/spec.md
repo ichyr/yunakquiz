@@ -8,16 +8,25 @@ The REST + JSON API under `/api` that the web app reads. It is read-only. It ret
 
 ### Requirement: List Categories
 
-`GET /api/categories` SHALL return the Categories that contain at least one Quiz, each with slug and name, ordered by name.
+`GET /api/categories` SHALL return the Categories that contain at least one Quiz, each with slug and name, ordered by name in Ukrainian alphabetical order.
 
 #### Scenario: Empty Category is left out
 
 - **WHEN** a Category exists with no Quizzes
 - **THEN** it is not in the response
 
+### Requirement: Ukrainian alphabetical order
+
+Every list ordered by name or title SHALL follow Ukrainian alphabetical order (а б в г ґ д е є ж з и і ї й …), with Ukrainian letters before Latin ones, because the database is created with the ICU locale provider and the `uk-UA` locale (`LOCALE_PROVIDER icu ICU_LOCALE 'uk-UA'`), not by annotating each query. The order is the same whatever the scout's Interface Language.
+
+#### Scenario: Letters outside the code-point order
+
+- **WHEN** Categories are named Гадюка, Ґанок, Дуб, Єнот, Жук, Іван, Їжак and Яблуко
+- **THEN** `GET /api/categories` lists them in exactly that order
+
 ### Requirement: Get a Category
 
-`GET /api/categories/:slug` SHALL return the Category and summaries of its Quizzes ordered by title. A summary has slug, title, description and Quiz Language, and no Questions.
+`GET /api/categories/:slug` SHALL return the Category and summaries of its Quizzes ordered by title in Ukrainian alphabetical order. A summary has slug, title, description and Quiz Language, and no Questions.
 
 #### Scenario: Known Category
 
@@ -31,7 +40,7 @@ The REST + JSON API under `/api` that the web app reads. It is read-only. It ret
 
 ### Requirement: Search Quizzes
 
-`GET /api/quizzes?q=` SHALL return summaries of the Quizzes whose title or description contains `q`, ignoring case, ordered by title. The query MUST be non-blank after trimming.
+`GET /api/quizzes?q=` SHALL return summaries of the Quizzes whose title or description contains `q`, ignoring case, ordered by title in Ukrainian alphabetical order. The query MUST be non-blank after trimming.
 
 #### Scenario: Blank or missing query
 
@@ -40,7 +49,7 @@ The REST + JSON API under `/api` that the web app reads. It is read-only. It ret
 
 ### Requirement: Get a Quiz
 
-`GET /api/quizzes/:slug` SHALL return the whole Quiz: metadata, Categories (ordered by name), and every Question with its Options, Correct Option and Explanation.
+`GET /api/quizzes/:slug` SHALL return the whole Quiz: metadata, Categories (ordered by name in Ukrainian alphabetical order), and every Question with its Options, Correct Option and Explanation.
 
 #### Scenario: Known Quiz
 

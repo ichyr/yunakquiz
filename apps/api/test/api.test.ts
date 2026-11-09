@@ -42,15 +42,74 @@ describe('GET /api/categories', () => {
   });
 });
 
+describe('Ukrainian alphabetical order', () => {
+  // Written out of order on purpose; code-point order would put є, і, ї before г and ґ last.
+  const names = ['Яблуко', 'Іван', 'Ґанок', 'Єнот', 'Гадюка', 'Їжак', 'Жук', 'Дуб'];
+  const alphabetical = ['Гадюка', 'Ґанок', 'Дуб', 'Єнот', 'Жук', 'Іван', 'Їжак', 'Яблуко'];
+
+  beforeEach(async () => {
+    await resetDatabase(db);
+    await seed(
+      db,
+      names.map((name, index) => ({
+        ...knots,
+        slug: `quiz-${index}`,
+        title: name,
+        description: 'алфавіт',
+        categories: [
+          { slug: `category-${index}`, name },
+          { slug: 'all', name: 'Усі' },
+        ],
+      })),
+    );
+  });
+
+  it('orders Categories by name', async () => {
+    const list = (await get('/api/categories')).body.map((c: { name: string }) => c.name);
+
+    expect(list.filter((name: string) => name !== 'Усі')).toEqual(alphabetical);
+  });
+
+  it('orders the Quizzes of a Category by title', async () => {
+    const titles = (await get('/api/categories/all')).body.quizzes.map(
+      (quiz: { title: string }) => quiz.title,
+    );
+
+    expect(titles).toEqual(alphabetical);
+  });
+
+  it('orders search results by title', async () => {
+    const titles = (await get(`/api/quizzes?q=${encodeURIComponent('алфавіт')}`)).body.map(
+      (quiz: { title: string }) => quiz.title,
+    );
+
+    expect(titles).toEqual(alphabetical);
+  });
+
+  it('orders the Categories of a Quiz by name', async () => {
+    await seed(db, [
+      {
+        ...knots,
+        slug: 'many',
+        categories: names.map((name, index) => ({ slug: `c-${index}`, name })),
+      },
+    ]);
+    const quiz = (await get('/api/quizzes/many')).body;
+
+    expect(quiz.categories.map((c: { name: string }) => c.name)).toEqual(alphabetical);
+  });
+});
+
 describe('GET /api/categories/:slug', () => {
   it('returns the Category with summaries of its Quizzes', async () => {
     const { status, body } = await get('/api/categories/istoriia-ukrainy');
 
     expect(status).toBe(200);
     expect(categoryWithQuizzesSchema.strict().parse(body)).toBeTruthy();
+    // Ukrainian titles come before Latin ones in Ukrainian alphabetical order.
     expect(body.quizzes.map((quiz: { slug: string }) => quiz.slug)).toEqual([
-      'basic-knots',
       'ivan-bohun',
+      'basic-knots',
     ]);
     expect(body.quizzes[0]).not.toHaveProperty('questions');
   });
