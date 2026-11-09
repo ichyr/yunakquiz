@@ -31,3 +31,7 @@ The API runs TypeScript directly on Node (type stripping), with no build step. A
 - `pnpm format` / `pnpm format:check`: Prettier.
 - `pnpm test`: unit and API tests across the workspace. API tests need `pnpm db:up` first; they use the `yunakquiz_test` database.
 - `pnpm check:stories`: every web component, including installed shadcn/ui primitives, needs a Storybook story next to it. oxlint has no Storybook plugin, so `scripts/check-stories.mjs` enforces this.
+
+## Acknowledgements
+
+This project was built with help from [Matt Pocock's agent skills](https://github.com/mattpocock/skills).
