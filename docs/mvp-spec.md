@@ -56,5 +56,5 @@ Quiz lists and search results show each Quiz's title, description and Quiz Langu
 ## Seed content
 
 - One TypeScript file per Quiz, checked against the shared zod schema.
-- Loaded by a seed script that can be rerun safely.
+- Loaded by a seed script that can be rerun safely. After a run the database matches the seed files: Quizzes whose file was removed, and Categories no Quiz uses, are removed.
 - First Quiz: "Іван Богун" (Quiz Language `uk`), in Categories "Патрони куренів" and "Історія України". Editorial source: [docs/content/ivan-bohun.md](content/ivan-bohun.md).

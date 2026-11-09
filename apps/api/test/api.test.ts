@@ -115,6 +115,49 @@ describe('seed', () => {
     });
   });
 
+  describe('when a Quiz is removed from the seed files', () => {
+    const knotsWithOwnCategory = {
+      ...knots,
+      categories: [...knots.categories, { slug: 'uzly', name: 'Вузли' }],
+    };
+
+    beforeEach(async () => {
+      await seed(db, [bohun, knotsWithOwnCategory]);
+    });
+
+    it('withdraws the Quiz and the Categories nothing else uses', async () => {
+      await seed(db, [bohun]);
+
+      expect((await get('/api/quizzes/basic-knots')).status).toBe(404);
+      expect((await get('/api/quizzes?q=bowline')).body).toEqual([]);
+      expect((await get('/api/categories/uzly')).status).toBe(404);
+      expect((await get('/api/categories')).body.map((c: { slug: string }) => c.slug)).toEqual([
+        'istoriia-ukrainy',
+        'patrony-kureniv',
+      ]);
+      expect((await get('/api/quizzes/ivan-bohun')).status).toBe(200);
+    });
+
+    it('removes nothing when the new seed run is invalid', async () => {
+      const broken = { ...bohun, questions: [] };
+
+      await expect(seed(db, [broken])).rejects.toThrow();
+
+      expect((await get('/api/quizzes/basic-knots')).status).toBe(200);
+      expect((await get('/api/categories/uzly')).status).toBe(200);
+    });
+  });
+
+  it('reports how many Quizzes it added, updated and removed', async () => {
+    const extra = { ...knots, slug: 'extra-knots', title: 'Extra Knots' };
+
+    expect(await seed(db, [{ ...bohun, title: 'Changed' }, extra])).toEqual({
+      added: 1,
+      updated: 1,
+      removed: 1,
+    });
+  });
+
   it('writes nothing when a Quiz breaks the content rules', async () => {
     const broken = { ...knots, slug: 'broken', questions: [] };
 
