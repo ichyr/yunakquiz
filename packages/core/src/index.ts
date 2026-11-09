@@ -1,4 +1,4 @@
 export * from './quiz.ts';
 export * from './attempt.ts';
-export * from './review.ts';
+export { isPerfect, type Review, type ReviewItem, type Score } from './review.ts';
 export * from './explanation.ts';

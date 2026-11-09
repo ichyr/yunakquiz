@@ -95,3 +95,8 @@ export type Quiz = z.infer<typeof quizSchema>;
 export type QuizInput = z.input<typeof quizSchema>;
 export type QuizSummary = z.infer<typeof quizSummarySchema>;
 export type CategoryWithQuizzes = z.infer<typeof categoryWithQuizzesSchema>;
+
+/** Position of the Correct Option in its Question. The schema guarantees exactly one. */
+export function correctOptionIndex(question: Pick<Question, 'options'>): number {
+  return question.options.findIndex((option) => option.correct);
+}

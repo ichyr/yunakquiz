@@ -1,4 +1,5 @@
-import { canFinish, type Attempt, type AttemptOption } from './attempt.ts';
+import type { AnsweringAttempt, AttemptOption } from './attempt.ts';
+import { correctOptionIndex } from './quiz.ts';
 
 export interface Score {
   correct: number;
@@ -27,15 +28,15 @@ export interface Review {
   items: ReviewItem[];
 }
 
-export function buildReview(attempt: Attempt): Review {
-  if (!canFinish(attempt)) {
-    throw new Error('Every Question needs an answer before the Review');
-  }
-
+/**
+ * Internal to core: `finishAttempt` is the only way to get a Review.
+ * Assumes every Question has a chosen Option; `finishAttempt` checks that first.
+ */
+export function buildReview(attempt: AnsweringAttempt): Review {
   const items = attempt.questions.map((question): ReviewItem => {
     const source = attempt.quiz.questions[question.id]!;
     const chosenOptionId = attempt.chosenOptions[question.id]!;
-    const correctOptionId = source.options.findIndex((option) => option.correct);
+    const correctOptionId = correctOptionIndex(source);
     return {
       questionId: question.id,
       prompt: question.prompt,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { quizSchema } from './index.ts';
+import { correctOptionIndex, quizSchema } from './index.ts';
 
 const validQuiz = {
   slug: 'ivan-bohun',
@@ -85,3 +85,11 @@ describe('quizSchema', () => {
 function withQuestion(overrides: Record<string, unknown>) {
   return { ...validQuiz, questions: [{ ...validQuiz.questions[0], ...overrides }] };
 }
+
+describe('correctOptionIndex', () => {
+  it('finds the position of the Correct Option in its Question', () => {
+    const [question] = quizSchema.parse(validQuiz).questions;
+
+    expect(correctOptionIndex(question!)).toBe(1);
+  });
+});

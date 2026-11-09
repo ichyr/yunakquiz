@@ -1,52 +1,23 @@
 import { describe, expect, it } from 'vitest';
 import {
   answeredCount,
-  buildReview,
   canFinish,
   chooseOption,
+  finishAttempt,
   isInProgress,
-  isPerfect,
-  quizSchema,
   startAttempt,
+  tryAgain,
   type Attempt,
-  type Quiz,
 } from './index.ts';
+import { chooseFirstOptions, quiz, seeded } from './sample.test-helpers.ts';
 
-const quiz: Quiz = quizSchema.parse({
-  slug: 'sample',
-  title: 'Sample',
-  description: 'Sample Quiz',
-  language: 'en',
-  categories: [{ slug: 'sample', name: 'Sample' }],
-  questions: ['Q1', 'Q2', 'Q3', 'Q4', 'Q5'].map((prompt) => ({
-    prompt,
-    options: [
-      { text: `${prompt} A`, correct: true },
-      { text: `${prompt} B` },
-      { text: `${prompt} C` },
-      { text: `${prompt} D` },
-    ],
-    explanation: `Because ${prompt} A.`,
-  })),
-});
-
-// Deterministic random source (mulberry32), so shuffles are repeatable.
-function seeded(seed: number) {
-  return () => {
-    seed = (seed + 0x6d2b79f5) | 0;
-    let t = Math.imul(seed ^ (seed >>> 15), seed | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-const prompts = (attempt: ReturnType<typeof startAttempt>) =>
-  attempt.questions.map((question) => question.prompt);
+const prompts = (attempt: Attempt) => attempt.questions.map((question) => question.prompt);
 
 describe('startAttempt', () => {
   it('offers every Question once, each with all of its Options once', () => {
     const attempt = startAttempt(quiz, seeded(1));
 
+    expect(attempt.phase).toBe('answering');
     expect(prompts(attempt).toSorted()).toEqual(['Q1', 'Q2', 'Q3', 'Q4', 'Q5']);
     for (const question of attempt.questions) {
       expect(question.options.map((option) => option.text).toSorted()).toEqual(
@@ -71,21 +42,8 @@ describe('startAttempt', () => {
   });
 });
 
-const chooseFirstOptions = (attempt: Attempt, questions = attempt.questions) =>
-  questions.reduce(
-    (acc, question) => chooseOption(acc, question.id, question.options[0]!.id),
-    attempt,
-  );
-
-// Every Correct Option in the sample Quiz ends in "A".
-const choose = (attempt: Attempt, prompt: string, letter: string) => {
-  const question = attempt.questions.find((candidate) => candidate.prompt === prompt)!;
-  const option = question.options.find((candidate) => candidate.text === `${prompt} ${letter}`)!;
-  return chooseOption(attempt, question.id, option.id);
-};
-
-describe('chooseOption and canFinish', () => {
-  it('allows Finish only once every Question has an answer, in any order', () => {
+describe('choosing Options', () => {
+  it('allows Finish only once every Question has a chosen Option, in any order', () => {
     const attempt = startAttempt(quiz, seeded(1));
     const reversed = attempt.questions.toReversed();
 
@@ -94,17 +52,17 @@ describe('chooseOption and canFinish', () => {
     expect(canFinish(chooseFirstOptions(attempt, reversed))).toBe(true);
   });
 
-  it('lets the scout change a chosen Option', () => {
+  it('lets the scout change a chosen Option without counting the Question twice', () => {
     const attempt = startAttempt(quiz, seeded(1));
     const [question] = attempt.questions;
     const [firstOption, secondOption] = question!.options;
 
-    const changed = chooseOption(
-      chooseOption(attempt, question!.id, firstOption!.id),
-      question!.id,
-      secondOption!.id,
-    );
+    const once = chooseOption(attempt, question!.id, firstOption!.id);
+    const changed = chooseOption(once, question!.id, secondOption!.id);
 
+    expect(answeredCount(attempt)).toBe(0);
+    expect(answeredCount(once)).toBe(1);
+    expect(answeredCount(changed)).toBe(1);
     expect(changed.chosenOptions[question!.id]).toBe(secondOption!.id);
   });
 
@@ -124,78 +82,55 @@ describe('chooseOption and canFinish', () => {
   });
 });
 
-describe('answeredCount and isInProgress', () => {
-  it('counts the Questions that have a chosen Option', () => {
-    const attempt = startAttempt(quiz, seeded(1));
-    const [first, second] = attempt.questions;
-
-    expect(answeredCount(attempt)).toBe(0);
-    const one = chooseOption(attempt, first!.id, first!.options[0]!.id);
-    expect(answeredCount(one)).toBe(1);
-    // Changing a choice does not count the Question twice.
-    expect(answeredCount(chooseOption(one, first!.id, first!.options[1]!.id))).toBe(1);
-    expect(answeredCount(chooseOption(one, second!.id, second!.options[0]!.id))).toBe(2);
-  });
-
-  it('is in progress once something is chosen and until the Attempt is finished', () => {
+describe('the Attempt lifecycle', () => {
+  it('is in progress once an Option is chosen, until Finish', () => {
     const attempt = startAttempt(quiz, seeded(1));
     const started = chooseOption(attempt, 0, 0);
+    const answered = chooseFirstOptions(attempt);
 
-    expect(isInProgress(attempt, false)).toBe(false);
-    expect(isInProgress(started, false)).toBe(true);
-    expect(isInProgress(started, true)).toBe(false);
-  });
-});
-
-describe('isPerfect', () => {
-  it('is true only when every Question was answered correctly', () => {
-    expect(isPerfect({ correct: 5, total: 5 })).toBe(true);
-    expect(isPerfect({ correct: 4, total: 5 })).toBe(false);
-    expect(isPerfect({ correct: 0, total: 5 })).toBe(false);
-  });
-});
-
-describe('buildReview', () => {
-  const finished = () => {
-    let attempt = startAttempt(quiz, seeded(3));
-    for (const [prompt, letter] of [
-      ['Q1', 'A'],
-      ['Q2', 'B'],
-      ['Q3', 'A'],
-      ['Q4', 'D'],
-      ['Q5', 'A'],
-    ] as const) {
-      attempt = choose(attempt, prompt, letter);
-    }
-    return attempt;
-  };
-
-  it('scores the Questions answered correctly out of the total', () => {
-    expect(buildReview(finished()).score).toEqual({ correct: 3, total: 5 });
+    expect(isInProgress(attempt)).toBe(false);
+    expect(isInProgress(started)).toBe(true);
+    expect(isInProgress(answered)).toBe(true);
+    expect(isInProgress(finishAttempt(answered))).toBe(false);
   });
 
-  it('shows each Question in Attempt order with the chosen and Correct Option and the Explanation', () => {
-    const attempt = finished();
-    const review = buildReview(attempt);
+  it('becomes reviewed on Finish, keeping the chosen Options', () => {
+    const answered = chooseFirstOptions(startAttempt(quiz, seeded(1)));
+    const reviewed = finishAttempt(answered);
 
-    expect(review.items.map((item) => item.prompt)).toEqual(
-      attempt.questions.map((question) => question.prompt),
-    );
-
-    const q2 = review.items.find((item) => item.prompt === 'Q2')!;
-    const textOf = (id: number) => q2.options.find((option) => option.id === id)!.text;
-    expect(q2.isCorrect).toBe(false);
-    expect(textOf(q2.chosenOptionId)).toBe('Q2 B');
-    expect(textOf(q2.correctOptionId)).toBe('Q2 A');
-    expect(q2.explanation).toBe('Because Q2 A.');
-    expect(q2.options.map((option) => option.text)).toEqual(
-      attempt.questions.find((question) => question.prompt === 'Q2')!.options.map((o) => o.text),
-    );
+    expect(reviewed.phase).toBe('reviewed');
+    expect(reviewed.chosenOptions).toEqual(answered.chosenOptions);
+    expect(reviewed.review.items).toHaveLength(quiz.questions.length);
+    expect(canFinish(reviewed)).toBe(false);
   });
 
-  it('refuses to build a Review before every Question has an answer', () => {
-    const attempt = startAttempt(quiz, seeded(3));
+  it('refuses Finish until every Question has a chosen Option', () => {
+    const attempt = startAttempt(quiz, seeded(1));
 
-    expect(() => buildReview(chooseOption(attempt, 0, 0))).toThrow();
+    expect(() => finishAttempt(attempt)).toThrow();
+    expect(() => finishAttempt(chooseOption(attempt, 0, 0))).toThrow();
+  });
+
+  it('refuses changes once reviewed', () => {
+    const reviewed = finishAttempt(chooseFirstOptions(startAttempt(quiz, seeded(1))));
+
+    expect(() => chooseOption(reviewed, 0, 0)).toThrow();
+    expect(() => finishAttempt(reviewed)).toThrow();
+  });
+
+  it('Try again starts a fresh, newly shuffled Attempt at the same Quiz', () => {
+    const reviewed = finishAttempt(chooseFirstOptions(startAttempt(quiz, seeded(1))));
+    const again = tryAgain(reviewed, seeded(2));
+
+    expect(again).toEqual(startAttempt(quiz, seeded(2)));
+    expect(again.phase).toBe('answering');
+    expect(again.chosenOptions).toEqual({});
+  });
+
+  it('refuses Try again before Finish', () => {
+    const attempt = startAttempt(quiz, seeded(1));
+
+    expect(() => tryAgain(attempt)).toThrow();
+    expect(() => tryAgain(chooseFirstOptions(attempt))).toThrow();
   });
 });

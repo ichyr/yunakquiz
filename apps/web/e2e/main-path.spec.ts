@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { correctOptionIndex } from '@yunakquiz/core';
 import ivanBohun from '../../api/seed/ivan-bohun.ts';
 import { uk } from '../src/i18n/locales/uk.ts';
 
@@ -6,11 +7,11 @@ import { uk } from '../src/i18n/locales/uk.ts';
 const correctOptionByPrompt = new Map(
   ivanBohun.questions.map((question) => [
     question.prompt,
-    question.options.find((option) => option.correct)!.text,
+    question.options[correctOptionIndex(question)]!.text,
   ]),
 );
 
-test('search, take a Quiz, see the Review', async ({ page }) => {
+test('search, take a Quiz, see the Review, try again', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('searchbox', { name: uk.search.label }).fill('Богун');
   await page.keyboard.press('Enter');
@@ -40,4 +41,11 @@ test('search, take a Quiz, see the Review', async ({ page }) => {
   await expect(page.getByText(`${total} / ${total}`, { exact: true })).toBeVisible();
   await expect(page.getByText(uk.review.perfect)).toBeVisible();
   await expect(page.getByText(uk.review.explanation, { exact: true })).toHaveCount(total);
+
+  await page.getByRole('button', { name: uk.review.tryAgain }).first().click();
+
+  await expect(page).toHaveURL(`/quizzes/${ivanBohun.slug}`);
+  await expect(questions).toHaveCount(total);
+  await expect(page.getByRole('radio', { checked: true })).toHaveCount(0);
+  await expect(finish).toBeDisabled();
 });

@@ -1,4 +1,4 @@
-import { isPerfect, type QuizSummary, type Review } from '@yunakquiz/core';
+import { isPerfect, type ReviewedAttempt } from '@yunakquiz/core';
 import { RotateCcwIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
@@ -6,13 +6,13 @@ import { QuizHeader } from './QuizHeader.tsx';
 import { ReviewItemCard } from './ReviewItemCard.tsx';
 
 interface ReviewViewProps {
-  quiz: QuizSummary;
-  review: Review;
+  attempt: ReviewedAttempt;
   onTryAgain: () => void;
 }
 
-export function ReviewView({ quiz, review, onTryAgain }: ReviewViewProps) {
+export function ReviewView({ attempt, onTryAgain }: ReviewViewProps) {
   const { t } = useTranslation();
+  const { quiz, review } = attempt;
   const { correct, total } = review.score;
 
   const tryAgain = (
