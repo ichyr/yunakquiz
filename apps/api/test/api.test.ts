@@ -121,6 +121,26 @@ describe('seed', () => {
     await expect(seed(db, [{ ...bohun, title: 'Changed' }, broken])).rejects.toThrow();
     expect((await get('/api/quizzes/ivan-bohun')).body.title).toBe('Іван Богун');
   });
+
+  it('writes nothing when two Quizzes give one Category different names', async () => {
+    const renamed = {
+      ...knots,
+      slug: 'renamed',
+      categories: [{ slug: 'patrony-kureniv', name: 'Інша назва' }],
+    };
+
+    await expect(seed(db, [{ ...bohun, title: 'Changed' }, renamed])).rejects.toThrow(
+      /patrony-kureniv.*Патрони куренів.*Інша назва/s,
+    );
+    expect((await get('/api/quizzes/ivan-bohun')).body.title).toBe('Іван Богун');
+    expect((await get('/api/quizzes/renamed')).status).toBe(404);
+  });
+
+  it('stores the Quiz Language in its standard spelling', async () => {
+    await seed(db, [{ ...knots, language: 'en-us' }]);
+
+    expect((await get('/api/quizzes/basic-knots')).body.language).toBe('en-US');
+  });
 });
 
 describe('when the database is unreachable', () => {
