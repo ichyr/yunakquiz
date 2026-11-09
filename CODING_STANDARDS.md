@@ -30,4 +30,4 @@ UI changes are checked against [web-design-guidelines](.agents/skills/web-design
 - Read environment variables through `env.ts`, and fail at startup when one is missing.
 - `async` handlers return data. Call `reply.code(...).send(...)` only when the status isn't 200.
 - Access the database through Drizzle only. Query functions live in modules such as `apps/api/src/quizzes.ts`.
-- Test with Vitest and `app.inject()` against the real Postgres database from Docker Compose. No mocks.
+- Testing is covered in [docs/testing.md](docs/testing.md).

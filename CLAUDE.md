@@ -6,6 +6,7 @@ A quiz platform for scouts. The point is learning: after each Attempt the scout 
 - What the MVP does: [docs/mvp-spec.md](docs/mvp-spec.md).
 - Why things are the way they are: [docs/adr/](docs/adr/).
 - How to write React and Fastify code: [CODING_STANDARDS.md](CODING_STANDARDS.md).
+- How to test: [docs/testing.md](docs/testing.md).
 
 ## Stack and layout
 
@@ -25,15 +26,8 @@ pnpm workspaces monorepo:
 
 ## Commits
 
-Commit messages follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/): `<type>(<optional scope>): <description>`. Types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`. Scopes match the workspace: `web`, `api`, `core`, `seed`. Breaking changes use `!` after the type/scope or a `BREAKING CHANGE:` footer. Enforced by commitlint: locally through a Husky `commit-msg` hook, and in CI.
+Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/), scoped by workspace. commitlint checks them; [commitlint.config.mjs](commitlint.config.mjs) lists the scopes.
 
 ## Roadmap
 
 Post-MVP work is tracked as GitHub Issues labelled `roadmap`; content fixes are labelled `content`.
-
-## Testing
-
-- Vitest unit tests for `packages/core`.
-- API tests against a real Postgres database (Docker Compose), not mocks.
-- One Playwright test for the main path: search, take a Quiz, see the Review.
-- CI: GitHub Actions on Linux runners.
