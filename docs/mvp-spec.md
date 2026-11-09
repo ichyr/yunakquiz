@@ -19,13 +19,14 @@ The product is generic, so any scouting organisation can use it.
 ## Screens
 
 1. **Home**: a search box, and the list of Categories that contain at least one Quiz.
-2. **Category**: the Quizzes in that Category.
-3. **Quiz**: all Questions on one page.
+2. **Search**: the search box, prefilled, and the Quizzes that match. Submitting the box on Home or here opens this screen at its own address, so a search can be shared as a link.
+3. **Category**: the Quizzes in that Category.
+4. **Quiz**: all Questions on one page.
    - Questions and the Options within each Question are shuffled on every **Attempt**.
    - The scout can answer in any order and change answers freely. No feedback is shown during the Attempt.
    - "Finish" is available only once every Question has an answer.
-   - Leaving partway (closing the tab, navigating away) asks for confirmation, then discards the Attempt.
-4. **Review**: replaces the Quiz page at the same address, so it has no link of its own.
+   - Leaving partway (closing the tab, navigating away) asks for confirmation, then discards the Attempt. Before the first answer nothing would be lost, so leaving does not ask.
+5. **Review**: replaces the Quiz page at the same address, so it has no link of its own.
    - Shows the **Score**, e.g. `7 / 10`.
    - For every Question: the scout's chosen Option, the Correct Option highlighted, and the Explanation.
    - A "Try again" button starts a fresh Attempt. Retakes are unlimited.
@@ -36,10 +37,11 @@ Quiz lists and search results show each Quiz's title, description and Quiz Langu
 
 - Matches against Quiz title and description (partial matches allowed).
 - Covers all Quizzes, whatever their Quiz Language or the **Interface Language**.
+- Runs when the scout submits the search box, not while typing. Search-as-you-type may come later.
 
 ## Languages
 
-- Interface Language: Ukrainian (default) and English, through an i18n library.
+- Interface Language: Ukrainian (default) and English, through an i18n library. The app opens in Ukrainian whatever the browser's language; once a scout picks a language, that device remembers it.
 - Quiz Language is independent of the Interface Language. Scouts can use their browser's translation for Quizzes in other languages.
 
 ## Out of scope for the MVP
