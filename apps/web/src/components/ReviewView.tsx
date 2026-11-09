@@ -1,4 +1,4 @@
-import type { QuizSummary, Review } from '@yunakquiz/core';
+import { isPerfect, type QuizSummary, type Review } from '@yunakquiz/core';
 import { RotateCcwIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
@@ -37,7 +37,7 @@ export function ReviewView({ quiz, review, onTryAgain }: ReviewViewProps) {
           {correct} / {total}
         </p>
         <p className="text-sm text-muted-foreground">
-          {correct === total ? t('review.perfect') : t('review.keepLearning')}
+          {isPerfect(review.score) ? t('review.perfect') : t('review.keepLearning')}
         </p>
         {tryAgain}
       </section>

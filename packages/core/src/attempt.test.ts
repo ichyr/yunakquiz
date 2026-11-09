@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
-  answer,
+  answeredCount,
   buildReview,
   canFinish,
+  chooseOption,
+  isInProgress,
+  isPerfect,
   quizSchema,
   startAttempt,
   type Attempt,
@@ -68,53 +71,87 @@ describe('startAttempt', () => {
   });
 });
 
-const answerAll = (attempt: Attempt, questions = attempt.questions) =>
-  questions.reduce((acc, question) => answer(acc, question.id, question.options[0]!.id), attempt);
+const chooseFirstOptions = (attempt: Attempt, questions = attempt.questions) =>
+  questions.reduce(
+    (acc, question) => chooseOption(acc, question.id, question.options[0]!.id),
+    attempt,
+  );
 
 // Every Correct Option in the sample Quiz ends in "A".
 const choose = (attempt: Attempt, prompt: string, letter: string) => {
   const question = attempt.questions.find((candidate) => candidate.prompt === prompt)!;
   const option = question.options.find((candidate) => candidate.text === `${prompt} ${letter}`)!;
-  return answer(attempt, question.id, option.id);
+  return chooseOption(attempt, question.id, option.id);
 };
 
-describe('answer and canFinish', () => {
+describe('chooseOption and canFinish', () => {
   it('allows Finish only once every Question has an answer, in any order', () => {
     const attempt = startAttempt(quiz, seeded(1));
     const reversed = attempt.questions.toReversed();
 
     expect(canFinish(attempt)).toBe(false);
-    expect(canFinish(answerAll(attempt, reversed.slice(1)))).toBe(false);
-    expect(canFinish(answerAll(attempt, reversed))).toBe(true);
+    expect(canFinish(chooseFirstOptions(attempt, reversed.slice(1)))).toBe(false);
+    expect(canFinish(chooseFirstOptions(attempt, reversed))).toBe(true);
   });
 
-  it('lets the scout change an answer', () => {
+  it('lets the scout change a chosen Option', () => {
     const attempt = startAttempt(quiz, seeded(1));
     const [question] = attempt.questions;
     const [firstOption, secondOption] = question!.options;
 
-    const changed = answer(
-      answer(attempt, question!.id, firstOption!.id),
+    const changed = chooseOption(
+      chooseOption(attempt, question!.id, firstOption!.id),
       question!.id,
       secondOption!.id,
     );
 
-    expect(changed.answers[question!.id]).toBe(secondOption!.id);
+    expect(changed.chosenOptions[question!.id]).toBe(secondOption!.id);
   });
 
   it('leaves the original Attempt unchanged', () => {
     const attempt = startAttempt(quiz, seeded(1));
 
-    answerAll(attempt);
+    chooseFirstOptions(attempt);
 
-    expect(attempt.answers).toEqual({});
+    expect(attempt.chosenOptions).toEqual({});
   });
 
   it('rejects an Option that does not belong to the Question', () => {
     const attempt = startAttempt(quiz, seeded(1));
 
-    expect(() => answer(attempt, 0, 99)).toThrow();
-    expect(() => answer(attempt, 99, 0)).toThrow();
+    expect(() => chooseOption(attempt, 0, 99)).toThrow();
+    expect(() => chooseOption(attempt, 99, 0)).toThrow();
+  });
+});
+
+describe('answeredCount and isInProgress', () => {
+  it('counts the Questions that have a chosen Option', () => {
+    const attempt = startAttempt(quiz, seeded(1));
+    const [first, second] = attempt.questions;
+
+    expect(answeredCount(attempt)).toBe(0);
+    const one = chooseOption(attempt, first!.id, first!.options[0]!.id);
+    expect(answeredCount(one)).toBe(1);
+    // Changing a choice does not count the Question twice.
+    expect(answeredCount(chooseOption(one, first!.id, first!.options[1]!.id))).toBe(1);
+    expect(answeredCount(chooseOption(one, second!.id, second!.options[0]!.id))).toBe(2);
+  });
+
+  it('is in progress once something is chosen and until the Attempt is finished', () => {
+    const attempt = startAttempt(quiz, seeded(1));
+    const started = chooseOption(attempt, 0, 0);
+
+    expect(isInProgress(attempt, false)).toBe(false);
+    expect(isInProgress(started, false)).toBe(true);
+    expect(isInProgress(started, true)).toBe(false);
+  });
+});
+
+describe('isPerfect', () => {
+  it('is true only when every Question was answered correctly', () => {
+    expect(isPerfect({ correct: 5, total: 5 })).toBe(true);
+    expect(isPerfect({ correct: 4, total: 5 })).toBe(false);
+    expect(isPerfect({ correct: 0, total: 5 })).toBe(false);
   });
 });
 
@@ -159,6 +196,6 @@ describe('buildReview', () => {
   it('refuses to build a Review before every Question has an answer', () => {
     const attempt = startAttempt(quiz, seeded(3));
 
-    expect(() => buildReview(answer(attempt, 0, 0))).toThrow();
+    expect(() => buildReview(chooseOption(attempt, 0, 0))).toThrow();
   });
 });

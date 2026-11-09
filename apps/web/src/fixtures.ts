@@ -1,7 +1,7 @@
 // Sample content for Storybook stories. Real Quizzes live in apps/api/seed/.
 import {
-  answer,
   buildReview,
+  chooseOption,
   quizSchema,
   startAttempt,
   type Category,
@@ -65,8 +65,8 @@ export function sampleAttempt() {
 /** An Attempt with the first Question wrong and the rest right. */
 export function sampleReview() {
   let attempt = sampleAttempt();
-  attempt = answer(attempt, 0, 1);
-  attempt = answer(attempt, 1, 1);
-  attempt = answer(attempt, 2, 1);
+  attempt = chooseOption(attempt, 0, 1);
+  attempt = chooseOption(attempt, 1, 1);
+  attempt = chooseOption(attempt, 2, 1);
   return buildReview(attempt);
 }

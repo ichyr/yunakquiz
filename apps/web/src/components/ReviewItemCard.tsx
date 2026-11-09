@@ -2,9 +2,10 @@ import type { ReviewItem } from '@yunakquiz/core';
 import { CheckIcon, XIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { Explanation } from './Explanation.tsx';
+import { QuestionHeader } from './QuestionHeader.tsx';
 
 interface ReviewItemCardProps {
   item: ReviewItem;
@@ -19,12 +20,13 @@ export function ReviewItemCard({ item, number, total, language }: ReviewItemCard
 
   return (
     <Card className="gap-4">
-      <CardHeader className="gap-1">
-        <div className="flex items-center justify-between gap-2">
-          <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-            {t('attempt.question', { number, total })}
-          </p>
-          {item.isCorrect ? (
+      <QuestionHeader
+        prompt={item.prompt}
+        number={number}
+        total={total}
+        language={language}
+        aside={
+          item.isCorrect ? (
             <Badge className="bg-success text-success-foreground">
               <CheckIcon aria-hidden />
               {t('review.correct')}
@@ -34,12 +36,9 @@ export function ReviewItemCard({ item, number, total, language }: ReviewItemCard
               <XIcon aria-hidden />
               {t('review.incorrect')}
             </Badge>
-          )}
-        </div>
-        <h2 lang={language} className="text-base leading-snug font-semibold">
-          {item.prompt}
-        </h2>
-      </CardHeader>
+          )
+        }
+      />
       <CardContent className="flex flex-col gap-4">
         <ul className="flex flex-col gap-2">
           {item.options.map((option) => {

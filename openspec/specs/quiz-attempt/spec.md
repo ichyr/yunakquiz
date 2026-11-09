@@ -36,11 +36,11 @@ The scout SHALL be able to answer Questions in any order and replace an answer a
 #### Scenario: Changing an answer
 
 - **WHEN** the scout picks one Option and then another on the same Question
-- **THEN** the second Option is the recorded answer
+- **THEN** the second Option is the chosen Option
 
 #### Scenario: Foreign Option
 
-- **WHEN** an answer names an Option or Question that is not part of the Attempt
+- **WHEN** a chosen Option names an Option or Question that is not part of the Attempt
 - **THEN** it is rejected with an error
 
 ### Requirement: Progress and Finish

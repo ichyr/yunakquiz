@@ -7,7 +7,7 @@
 - **Core package** (framework-free, ADR 0002) owns the Quiz schemas and all Quiz logic. Its interface is small and deep:
   - `quizSchema` and friends (`categorySchema`, `quizSummarySchema`, `categoryWithQuizzesSchema`): the content rules and the API response shapes, used by the seed, the API tests and the web client.
   - `startAttempt(quiz, random?)` → `Attempt`: shuffles Questions and Options (Fisher–Yates), strips Correct Options. The random source is injectable for deterministic tests.
-  - `answer(attempt, questionId, optionId)` → new `Attempt`: immutable, throws on an Option that isn't part of the Question.
+  - `chooseOption(attempt, questionId, optionId)` → new `Attempt`: immutable, throws on an Option that isn't part of the Question.
   - `canFinish(attempt)` → boolean.
   - `buildReview(attempt)` → `Review`: Score plus one item per Question in Attempt order; throws if any Question is unanswered.
   - `explanationParagraphs(text)` → string[].
@@ -50,7 +50,7 @@ Errors are `{ error: string }`; 5xx bodies are always the generic message.
 ## Testing Decisions
 
 - A good test drives the module through its public interface and asserts what a scout or client would observe: which Questions and Options are offered, what the Score is, what an endpoint returns. Tests don't reach into internal state or mock our own modules.
-- **Core** (Vitest): `quizSchema` content rules; `startAttempt` / `answer` / `canFinish` / `buildReview` with a seeded random source so shuffles are repeatable; `explanationParagraphs`. This is the main seam for Attempt and Review rules.
+- **Core** (Vitest): `quizSchema` content rules; `startAttempt` / `chooseOption` / `canFinish` / `buildReview` with a seeded random source so shuffles are repeatable; `explanationParagraphs`. This is the main seam for Attempt and Review rules.
 - **API** (Vitest + Fastify `inject`, real Postgres from Docker Compose, its own `yunakquiz_test` database, reset and seeded before each test): every route's success and failure cases, search matching and escaping, seed rerun and all-or-nothing behaviour, and an app built against an unreachable database for 503/500 handling.
 - **Main path** (one Playwright test, Pixel 7 viewport, against a seeded database): search from Home, open the Quiz, answer every Question using the seed file as the answer key, Finish, see a perfect Score and an Explanation for every Question.
 - No component unit tests; Storybook stories cover visual states.
