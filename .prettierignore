@@ -1,3 +1,5 @@
 pnpm-lock.yaml
 docs/content/
 apps/api/drizzle/
+.agents/
+skills-lock.json

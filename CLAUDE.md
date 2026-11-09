@@ -5,6 +5,7 @@ A quiz platform for scouts. The point is learning: after each Attempt the scout 
 - Domain vocabulary: [GLOSSARY.md](GLOSSARY.md). Use these terms in code, UI copy and conversation; avoid the listed synonyms.
 - What the MVP does: [docs/mvp-spec.md](docs/mvp-spec.md).
 - Why things are the way they are: [docs/adr/](docs/adr/).
+- How to write React and Fastify code: [CODING_STANDARDS.md](CODING_STANDARDS.md).
 
 ## Stack and layout
 
