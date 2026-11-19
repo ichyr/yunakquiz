@@ -15,7 +15,7 @@ Animate between UI states using the browser's native `document.startViewTransiti
 
 Every `<ViewTransition>` should communicate a spatial relationship or continuity. If you can't articulate what it communicates, don't add it.
 
-Implement **all** applicable patterns from this list, in this order:
+Patterns, in the order to consider them:
 
 | Priority | Pattern | What it communicates |
 |----------|---------|---------------------|
@@ -25,7 +25,7 @@ Implement **all** applicable patterns from this list, in this order:
 | 4 | **State change** (`enter`/`exit`) | "Something appeared/disappeared" |
 | 5 | **Route change** (page-level) | "Going to a new place" |
 
-This is an implementation order, not a "pick one" list. Implement every pattern that fits the app. Only skip a pattern if the app has no use case for it.
+Use the patterns the task calls for; the priority says which to reach for first when several fit.
 
 ### Choosing Animation Style
 
