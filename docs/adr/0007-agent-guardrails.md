@@ -36,6 +36,14 @@ Verified: the exclusion works only on a bare command. `git push -u origin <branc
 
 Still open: `pnpm install` and `pnpm test:e2e` inside the sandbox, the API reaching Postgres on `localhost:5432` from the sandbox, the excluded commands prompting as intended, and a sandboxed `git commit` in a git worktree have not been verified yet.
 
+## How to verify a guardrail
+
+Verify with tests, not by launching Claude Code. Subagents that built throwaway repo copies and ran `claude -p` against them cost far more than the check was worth (see [the token usage analysis](../18112026-complete-token-usage-analisys.md)).
+
+- **Hooks** (git-guard, guardrail-lock): add a row to the `node:test` table in `.claude/hooks/*.test.mjs`, which feeds the hook the JSON Claude Code would send on stdin, and run `pnpm test:guardrails`. A new bypass variant is a new row.
+- **Permission rules and sandbox settings**: these cannot be unit tested. Read the config against the Claude Code docs, then list one manual check in the PR's Verification section for a person to run in a real session (for example, "`cat ~/.ssh/config` is blocked").
+- **Agents do not run `claude -p`**, nested or in a copy of the repo, to check a guardrail.
+
 ## `.env` files
 
 Non-secret local defaults (today only the Docker `DATABASE_URL`) live in a committed `.env.development` (#34). Secrets go in the gitignored `.env`, which agents and the sandbox can't read. The API's `dev`, `db:migrate` and `db:seed` scripts load `.env.development` first and `.env` second, so `.env` wins.
