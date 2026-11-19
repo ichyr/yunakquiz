@@ -116,7 +116,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$(git -C \"$CLAUDE_PROJECT_DIR\" rev-parse --show-toplevel)/.claude/hooks/git-guard.mjs\"",
+            "command": "node \"$(git -C \"$CLAUDE_PROJECT_DIR\" rev-parse --show-toplevel)/.claude/hooks/git-guard.mjs\" || exit 2",
             "statusMessage": "Checking git guardrails"
           }
         ]
@@ -126,7 +126,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$(git -C \"$CLAUDE_PROJECT_DIR\" rev-parse --show-toplevel)/.claude/hooks/guardrail-lock.mjs\"",
+            "command": "node \"$(git -C \"$CLAUDE_PROJECT_DIR\" rev-parse --show-toplevel)/.claude/hooks/guardrail-lock.mjs\" || exit 2",
             "statusMessage": "Checking guardrail files"
           }
         ]
@@ -140,6 +140,18 @@
             "type": "command",
             "command": "cd \"$(git -C \"$CLAUDE_PROJECT_DIR\" rev-parse --show-toplevel)\" && jq -r '.tool_input.file_path' | xargs pnpm exec prettier --write --ignore-unknown",
             "statusMessage": "Formatting"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$(git -C \"$CLAUDE_PROJECT_DIR\" rev-parse --show-toplevel)/.claude/hooks/verify-on-stop.mjs\"",
+            "timeout": 180,
+            "statusMessage": "Typechecking and linting"
           }
         ]
       }
