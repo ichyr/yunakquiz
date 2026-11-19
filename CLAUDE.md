@@ -31,3 +31,7 @@ pnpm workspaces monorepo:
 ## Commits
 
 Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/), scoped by workspace. commitlint checks them; [commitlint.config.mjs](commitlint.config.mjs) lists the scopes.
+
+## Pull requests
+
+PR titles are Conventional Commits too. PR bodies follow [.github/pull_request_template.md](.github/pull_request_template.md), also when written with the `pr` skill: the template's Verification section takes the place of the skill's Evidence section and keeps its Before / After. `gh pr create --body` skips the template, so copy its sections into the body.
