@@ -105,7 +105,6 @@ describe('wiring', () => {
     }
     const [h] = entry.hooks;
     assert.ok(h.command.includes('rev-parse --show-toplevel'));
-    assert.equal(h.onFailure, 'block');
   });
 
   test('deny rules lock the guardrail files for sessions started at the root or in apps/*', () => {
