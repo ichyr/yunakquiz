@@ -14,7 +14,6 @@ Requires [fnm](https://github.com/Schniz/fnm) (or any Node version manager that 
 fnm install          # Node version from .node-version
 corepack enable      # pnpm version from package.json
 pnpm install         # also installs the commit-msg hook
-cp .env.example .env
 pnpm db:up           # Postgres 18 in Docker, plus an empty yunakquiz_test database
 pnpm db:seed         # applies migrations and loads the Quizzes in apps/api/seed/; safe to rerun
 pnpm dev:api         # API on http://localhost:3000/api
