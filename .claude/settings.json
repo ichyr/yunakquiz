@@ -25,7 +25,18 @@
       "Read(~/.gnupg/**)",
       "Read(~/.netrc)",
       "Read(~/Library/Keychains/**)",
-      "Read(~/.claude.json)"
+      "Read(~/.claude.json)",
+      "Edit(.claude/settings.json)",
+      "Edit(.claude/settings.local.json)",
+      "Edit(.claude/hooks/**)",
+      "Edit(.github/**)",
+      "Edit(apps/*/.claude/**)",
+      "Edit(../../.claude/settings.json)",
+      "Edit(../../.claude/settings.local.json)",
+      "Edit(../../.claude/hooks/**)",
+      "Edit(../../.github/**)",
+      "Edit(../web/.claude/**)",
+      "Edit(../api/.claude/**)"
     ],
     "ask": [
       "Bash(git push --force-with-lease*)",
@@ -59,6 +70,14 @@
         "~/Library/Caches/ms-playwright",
         "~/.cache/ms-playwright"
       ],
+      "denyWrite": [
+        ".claude/settings.json",
+        ".claude/settings.local.json",
+        ".claude/hooks",
+        ".github",
+        "apps/web/.claude",
+        "apps/api/.claude"
+      ],
       "denyRead": ["/**/.env.*"],
       "allowRead": [
         "**/.env.example",
@@ -89,6 +108,17 @@
             "command": "node \"$(git -C \"$CLAUDE_PROJECT_DIR\" rev-parse --show-toplevel)/.claude/hooks/git-guard.mjs\"",
             "onFailure": "block",
             "statusMessage": "Checking git guardrails"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$(git -C \"$CLAUDE_PROJECT_DIR\" rev-parse --show-toplevel)/.claude/hooks/guardrail-lock.mjs\"",
+            "onFailure": "block",
+            "statusMessage": "Checking guardrail files"
           }
         ]
       }
