@@ -1,7 +1,12 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "model": "opus",
+  "env": {
+    "CLAUDE_CODE_SUBAGENT_MODEL": "sonnet"
+  },
   "permissions": {
     "deny": [
+      "Bash(claude -p*)",
       "Bash(git push --force)",
       "Bash(git push --force *)",
       "Bash(git push -f)",
@@ -78,7 +83,9 @@
         "apps/web/.claude",
         "apps/api/.claude"
       ],
-      "denyRead": ["/**/.env.*"],
+      "denyRead": [
+        "/**/.env.*"
+      ],
       "allowRead": [
         "**/.env.example",
         "**/.env.development",
