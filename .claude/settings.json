@@ -15,7 +15,17 @@
       "Bash(git clean -x*)",
       "Bash(git commit --no-verify*)",
       "Bash(rm -rf /)",
-      "Bash(rm -rf ~*)"
+      "Bash(rm -rf ~*)",
+      "Read(//**/.env)",
+      "Read(~/.ssh/**)",
+      "Read(~/.aws/**)",
+      "Read(~/.config/gh/**)",
+      "Read(~/.npmrc)",
+      "Read(~/.docker/config.json)",
+      "Read(~/.gnupg/**)",
+      "Read(~/.netrc)",
+      "Read(~/Library/Keychains/**)",
+      "Read(~/.claude.json)"
     ],
     "ask": [
       "Bash(git push --force-with-lease*)",
@@ -29,6 +39,45 @@
       "Bash(git stash drop*)",
       "Bash(git stash clear)"
     ]
+  },
+  "sandbox": {
+    "enabled": true,
+    "autoAllowBashIfSandboxed": true,
+    "allowUnsandboxedCommands": true,
+    "excludedCommands": [
+      "docker *",
+      "pnpm db:up",
+      "git push *",
+      "git fetch *",
+      "git pull *",
+      "gh *"
+    ],
+    "filesystem": {
+      "allowWrite": [
+        "~/Library/pnpm",
+        "~/.local/share/pnpm",
+        "~/Library/Caches/ms-playwright",
+        "~/.cache/ms-playwright"
+      ],
+      "denyRead": ["/**/.env.*"],
+      "allowRead": [
+        "**/.env.example",
+        "**/.env.development",
+        "../../.env.example",
+        "../../.env.development"
+      ]
+    },
+    "network": {
+      "allowedDomains": [
+        "registry.npmjs.org",
+        "github.com",
+        "codeload.github.com",
+        "objects.githubusercontent.com",
+        "cdn.playwright.dev",
+        "playwright.download.prss.microsoft.com"
+      ],
+      "allowLocalBinding": true
+    }
   },
   "hooks": {
     "PreToolUse": [

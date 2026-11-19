@@ -33,6 +33,16 @@ The API runs TypeScript directly on Node (type stripping), with no build step. A
 - `pnpm test`: unit and API tests across the workspace. API tests need `pnpm db:up` first; they use the `yunakquiz_test` database.
 - `pnpm check:stories`: every web component, including installed shadcn/ui primitives, needs a Storybook story next to it. oxlint has no Storybook plugin, so `scripts/check-stories.mjs` enforces this.
 
+## Claude Code sandbox
+
+`.claude/settings.json` runs Claude Code's Bash commands, and everything they start, in its sandbox. `apps/web` and `apps/api` link to the same file, because Claude Code reads project settings only from the folder it starts in.
+
+- Sandboxed commands can't read `.env` or `.env.*` at any depth (`.env.example` and `.env.development` stay readable), or credentials in your home folder such as `~/.ssh`, `~/.aws` and `~/.config/gh`. Claude's Read tool is denied `.env` and the same home paths.
+- Sandboxed commands write only inside the folder Claude started in, temp folders, the pnpm store and the Playwright browser cache. They reach only npm, GitHub and the Playwright browser downloads. Localhost is open both ways: dev servers can listen, and the API reaches Postgres on `localhost:5432` directly.
+- Sandbox paths without a leading `/` resolve from the folder Claude started in, so the `.env.*` block is an absolute pattern, and the `.env.example` and `.env.development` exceptions are listed both as `**/…` (start at the root) and as `../../…` (start in `apps/*`).
+- `docker`, `pnpm db:up`, `gh`, `git push`, `git fetch` and `git pull` run outside the sandbox, after the usual permission prompt, since they need the Docker socket, `~/.config/gh` and `~/.ssh`. `pnpm db:up` is listed itself because the exclusion matches the command Claude runs, not the `docker` that pnpm starts.
+- A denied `.env` looks missing to Node, so `--env-file-if-exists=../../.env` skips it with `.env not found. Continuing without it.` and the scripts run on `.env.development` alone. Inside the sandbox, `.env` overrides are therefore ignored; run the command yourself to use them.
+
 ## Acknowledgements
 
 This project was built with help from [Matt Pocock's agent skills](https://github.com/mattpocock/skills).
