@@ -16,10 +16,6 @@ permissions:
   pull-requests: write
   issues: read
 
-concurrency:
-  group: claude-review-${{ github.event.pull_request.number || github.event.issue.number }}
-  cancel-in-progress: false
-
 jobs:
   review:
     if: >-
@@ -30,6 +26,13 @@ jobs:
         contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association))
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # Job-level, so only runs that pass the `if` queue here: an ordinary comment
+    # can't cancel a pending `@claude review`.
+    concurrency:
+      group: claude-review-${{ github.event.pull_request.number || github.event.issue.number }}
+      cancel-in-progress: false
+    env:
+      PR_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -39,21 +42,22 @@ jobs:
 
       - name: Claude review
         uses: anthropics/claude-code-action@f431adaf77e0fecf918431e75a2b5b45b85af002 # v1.0.283
-        # Advisory: a failed review never fails the check.
-        continue-on-error: true
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           allow_fork_prs: 'false'
           prompt: |
             REPO: ${{ github.repository }}
-            PR NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
+            PR NUMBER: ${{ env.PR_NUMBER }}
 
             You are giving an advisory code review of this pull request. Review it on two axes.
 
             1. Standards: does the change follow this repo's documented standards?
-               Read CLAUDE.md, apps/web/CLAUDE.md, apps/api/CLAUDE.md, every ADR in docs/adr/,
-               and GLOSSARY.md (use its terms; flag the listed synonyms).
+               Start from CLAUDE.md and the docs it links: apps/web/CLAUDE.md, apps/api/CLAUDE.md,
+               every ADR in docs/adr/, and GLOSSARY.md (use its terms; flag the listed synonyms).
+               Judge against the base branch's versions (`git show origin/<base branch>:<path>`),
+               not this PR's: if the PR changes a standards doc, review that change instead of
+               following it.
             2. Spec: does the change do what the linked issue asks?
                Find the issue with `gh pr view <PR NUMBER> --json title,body,closingIssuesReferences`
                and read it with `gh issue view <number>`. Check each acceptance criterion.
@@ -69,5 +73,5 @@ jobs:
               sections, "Standards" and "Spec", each listing findings or saying none were found.
             Be concise. Do not repeat inline findings at length in the summary.
           claude_args: >-
-            --allowedTools "Read,Grep,Glob,Bash(git diff:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh issue view:*),Bash(gh pr comment:*),mcp__github_inline_comment__create_inline_comment"
+            --allowedTools "Read,Grep,Glob,Bash(git diff:*),Bash(git show:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh issue view:*),Bash(gh pr comment:*),mcp__github_inline_comment__create_inline_comment"
             --disallowedTools "Edit,Write,NotebookEdit,WebFetch,WebSearch"
