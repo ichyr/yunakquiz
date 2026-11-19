@@ -29,6 +29,11 @@ const GIT_GLOBAL_WITH_VALUE = new Set([
   '--config-env',
   '--super-prefix',
 ]);
+// Short flags that take a value, per command, so a cluster such as `-am` stops reading at `m`.
+const PUSH_FLAGS_WITH_VALUE = 'o';
+const CLEAN_FLAGS_WITH_VALUE = 'e';
+const RESTORE_FLAGS_WITH_VALUE = 's';
+const COMMIT_FLAGS_WITH_VALUE = 'mFCcSut';
 const WRAPPERS = new Set(['sudo', 'command', 'env', 'nice', 'nohup', 'time', 'exec', 'xargs']);
 const SHELLS = new Set(['bash', 'sh', 'zsh', 'dash']);
 
@@ -121,23 +126,25 @@ function stripPrefixes(words) {
   return words.slice(start);
 }
 
-/** True when a short-flag cluster such as `-uf` contains `letter`, reading up to a value-taking flag. */
-function hasShortFlag(args, letter, takesValue = '') {
+/**
+ * True when `args` hold one of the `long` options or a short-flag cluster (such as `-uf`) holding
+ * one of the `short` letters. A cluster is read up to the first letter in `shortWithValue`, whose
+ * value follows. Like git, a long option may be cut to any prefix of two letters or more.
+ */
+function hasFlag(args, { long = [], short = '', shortWithValue = '' }) {
   for (const arg of args) {
     if (arg === '--') return false;
-    if (!/^-[A-Za-z]/.test(arg)) continue;
-    for (const ch of arg.slice(1)) {
-      if (ch === letter) return true;
-      if (takesValue.includes(ch)) break;
+    if (arg.startsWith('--')) {
+      const name = arg.split('=')[0];
+      if (name.length >= 4 && long.some((option) => option.startsWith(name))) return true;
+    } else if (/^-[A-Za-z]/.test(arg)) {
+      for (const letter of arg.slice(1)) {
+        if (short.includes(letter)) return true;
+        if (shortWithValue.includes(letter)) break;
+      }
     }
   }
   return false;
-}
-
-function hasLongFlag(args, name) {
-  const end = args.indexOf('--');
-  const options = end === -1 ? args : args.slice(0, end);
-  return options.some((arg) => arg === name || arg.startsWith(`${name}=`));
 }
 
 /** Positional arguments, skipping options and the values of `withValue` options. */
@@ -171,16 +178,16 @@ const ask = (reason) => ({ decision: 'ask', reason });
 
 function checkPush(args, cwd) {
   const results = [];
-  if (hasLongFlag(args, '--force') || hasShortFlag(args, 'f', 'o')) {
+  if (hasFlag(args, { long: ['--force'], short: 'f', shortWithValue: PUSH_FLAGS_WITH_VALUE })) {
     results.push(
       deny('`git push --force` / `-f` rewrites remote history. Push a new commit instead.'),
     );
-  } else if (hasLongFlag(args, '--force-with-lease')) {
+  } else if (hasFlag(args, { long: ['--force-with-lease'] })) {
     results.push(
       ask('`git push --force-with-lease` rewrites remote history; the human confirms it.'),
     );
   }
-  if (hasLongFlag(args, '--all') || hasLongFlag(args, '--mirror')) {
+  if (hasFlag(args, { long: ['--all', '--mirror'] })) {
     results.push(
       deny(
         `\`git push --all\` / \`--mirror\` pushes \`${PROTECTED_BRANCH}\`. Push your feature branch by name.`,
@@ -192,7 +199,11 @@ function checkPush(args, cwd) {
     args,
     new Set(['-o', '--push-option', '--repo', '--receive-pack', '--exec']),
   );
-  const deleting = hasLongFlag(args, '--delete') || hasShortFlag(args, 'd', 'o');
+  const deleting = hasFlag(args, {
+    long: ['--delete'],
+    short: 'd',
+    shortWithValue: PUSH_FLAGS_WITH_VALUE,
+  });
   if (deleting)
     results.push(ask('`git push --delete` removes a remote branch or tag; the human confirms it.'));
   if (refspecs.some((spec) => spec.startsWith('+'))) {
@@ -238,7 +249,7 @@ function checkGit(words, cwd) {
     case 'push':
       return checkPush(args, gitCwd);
     case 'reset':
-      return hasLongFlag(args, '--hard')
+      return hasFlag(args, { long: ['--hard'] })
         ? [
             deny(
               '`git reset --hard` throws away uncommitted work. Use `git stash` or `git reset --keep`.',
@@ -246,10 +257,11 @@ function checkGit(words, cwd) {
           ]
         : [];
     case 'clean':
-      return hasLongFlag(args, '--force') ||
-        hasShortFlag(args, 'f', 'e') ||
-        hasShortFlag(args, 'x', 'e') ||
-        hasShortFlag(args, 'X', 'e')
+      return hasFlag(args, {
+        long: ['--force'],
+        short: 'fxX',
+        shortWithValue: CLEAN_FLAGS_WITH_VALUE,
+      })
         ? [
             deny(
               '`git clean -f` / `-fd` / `-x` deletes untracked files for good. Run `git clean -n` to list them instead.',
@@ -264,8 +276,16 @@ function checkGit(words, cwd) {
         : [];
     }
     case 'restore': {
-      const staged = hasLongFlag(args, '--staged') || hasShortFlag(args, 'S', 's');
-      const worktree = hasLongFlag(args, '--worktree') || hasShortFlag(args, 'W', 's');
+      const staged = hasFlag(args, {
+        long: ['--staged'],
+        short: 'S',
+        shortWithValue: RESTORE_FLAGS_WITH_VALUE,
+      });
+      const worktree = hasFlag(args, {
+        long: ['--worktree'],
+        short: 'W',
+        shortWithValue: RESTORE_FLAGS_WITH_VALUE,
+      });
       const everything = positionals(args, new Set(['-s', '--source'])).some(
         (path) => path === '.' || path === ':/',
       );
@@ -276,14 +296,14 @@ function checkGit(words, cwd) {
       return [];
     }
     case 'branch': {
-      const deleting = hasLongFlag(args, '--delete') || hasShortFlag(args, 'd');
-      const forced = hasLongFlag(args, '--force') || hasShortFlag(args, 'f');
-      return hasShortFlag(args, 'D') || (deleting && forced)
+      const deleting = hasFlag(args, { long: ['--delete'], short: 'd' });
+      const forced = hasFlag(args, { long: ['--force'], short: 'f' });
+      return hasFlag(args, { short: 'D' }) || (deleting && forced)
         ? [ask('`git branch -D` deletes a branch even if it is not merged; the human confirms it.')]
         : [];
     }
     case 'tag':
-      return hasLongFlag(args, '--delete') || hasShortFlag(args, 'd')
+      return hasFlag(args, { long: ['--delete'], short: 'd' })
         ? [ask('`git tag -d` deletes a tag; the human confirms it.')]
         : [];
     case 'stash':
@@ -296,9 +316,11 @@ function checkGit(words, cwd) {
         : [];
     case 'commit': {
       const skipsHooks =
-        hasLongFlag(args, '--no-verify') ||
-        hasShortFlag(args, 'n', 'mFCcSut') ||
-        config.some((entry) => entry.toLowerCase().startsWith('core.hookspath'));
+        hasFlag(args, {
+          long: ['--no-verify'],
+          short: 'n',
+          shortWithValue: COMMIT_FLAGS_WITH_VALUE,
+        }) || config.some((entry) => entry.toLowerCase().startsWith('core.hookspath'));
       return skipsHooks
         ? [
             deny(
@@ -317,14 +339,13 @@ function isInsideBuildFolder(target, cwd) {
   const path = relative(PROJECT_ROOT, resolve(cwd, target));
   if (path === '' || path.startsWith('..') || isAbsolute(path)) return false;
   const segments = path.split(sep);
-  const index = segments.findIndex((segment) => BUILD_FOLDERS.includes(segment));
-  return index !== -1 && !segments.slice(0, index + 1).some((segment) => segment.includes('*'));
+  // A glob before the build folder (`apps/*/dist`) still only reaches build folders.
+  return segments.some((segment) => BUILD_FOLDERS.includes(segment));
 }
 
 function checkRm(args, cwd) {
-  const recursive =
-    hasLongFlag(args, '--recursive') || hasShortFlag(args, 'r') || hasShortFlag(args, 'R');
-  const force = hasLongFlag(args, '--force') || hasShortFlag(args, 'f');
+  const recursive = hasFlag(args, { long: ['--recursive'], short: 'rR' });
+  const force = hasFlag(args, { long: ['--force'], short: 'f' });
   if (!recursive || !force) return [];
   const targets = positionals(args);
   if (targets.length > 0 && targets.every((target) => isInsideBuildFolder(target, cwd))) return [];
@@ -336,23 +357,38 @@ function checkRm(args, cwd) {
   ];
 }
 
-/** Every deny or ask that applies to `command`, run from `cwd`. */
+/** The commands `find` runs through `-exec`, `-execdir` or `-ok`, each up to its `;` or `+`. */
+function findExecs(args) {
+  const commands = [];
+  args.forEach((arg, i) => {
+    if (!['-exec', '-execdir', '-ok', '-okdir'].includes(arg)) return;
+    const rest = args.slice(i + 1);
+    const end = rest.findIndex((word) => word === ';' || word === '+');
+    commands.push(stripPrefixes(end === -1 ? rest : rest.slice(0, end)));
+  });
+  return commands.filter((words) => words.length > 0);
+}
+
+/** Every deny or ask that applies to one simple command run from `cwd`. */
+function checkCommand(words, cwd) {
+  const program = basename(words[0]);
+  if (program === 'git') return checkGit(words, cwd);
+  if (program === 'rm') return checkRm(words.slice(1), cwd);
+  if (program === 'find')
+    return findExecs(words.slice(1)).flatMap((exec) => checkCommand(exec, cwd));
+  if (SHELLS.has(program) && words.includes('-c'))
+    return evaluate(words[words.indexOf('-c') + 1] ?? '', cwd);
+  if (program === 'eval') return evaluate(words.slice(1).join(' '), cwd);
+  return [];
+}
+
+/** Every deny or ask that applies to `command`, run from `cwd`, following `cd` between commands. */
 function evaluate(command, cwd) {
   const results = [];
   let here = cwd;
   for (const words of simpleCommands(command)) {
-    const program = basename(words[0]);
-    if (program === 'cd') {
-      here = resolve(here, words[1] ?? process.env.HOME ?? here);
-    } else if (program === 'git') {
-      results.push(...checkGit(words, here));
-    } else if (program === 'rm') {
-      results.push(...checkRm(words.slice(1), here));
-    } else if (SHELLS.has(program) && words.includes('-c')) {
-      results.push(...evaluate(words[words.indexOf('-c') + 1] ?? '', here));
-    } else if (program === 'eval') {
-      results.push(...evaluate(words.slice(1).join(' '), here));
-    }
+    if (words[0] === 'cd') here = resolve(here, words[1] ?? process.env.HOME ?? here);
+    else results.push(...checkCommand(words, here));
   }
   return results;
 }

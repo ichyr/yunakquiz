@@ -14,8 +14,7 @@
       "Bash(git clean -f*)",
       "Bash(git clean -x*)",
       "Bash(git commit --no-verify*)",
-      "Bash(git commit *--no-verify*)",
-      "Bash(rm -rf /*)",
+      "Bash(rm -rf /)",
       "Bash(rm -rf ~*)"
     ],
     "ask": [

@@ -21,8 +21,8 @@ function repoOnBranch(branch) {
 const onMain = repoOnBranch('main');
 const onFeature = repoOnBranch('feat/quiz-timer');
 
-function run(command, cwd = projectRoot) {
-  const payload = { tool_name: 'Bash', tool_input: { command }, cwd };
+function run(command, cwd = projectRoot, toolName = 'Bash') {
+  const payload = { tool_name: toolName, tool_input: { command }, cwd };
   const result = spawnSync('node', [hook], { input: JSON.stringify(payload), encoding: 'utf8' });
   assert.equal(result.status, 0, result.stderr);
   if (result.stdout.trim() === '') return { decision: 'allow', reason: '' };
@@ -116,59 +116,69 @@ const table = {
     ['rm -rf apps/web/playwright-report apps/web/test-results', 'allow'],
     ['rm -rf dist', 'allow', join(projectRoot, 'apps', 'web')],
     ['rm -rf ../../node_modules/.vite', 'allow', join(projectRoot, 'apps', 'api')],
+    ['rm -rf apps/*/dist', 'allow'],
+    ['rm -rf ' + join(projectRoot, 'node_modules'), 'allow'],
   ],
   'rebase: allow': [
     ['git rebase main', 'allow'],
     ['git rebase --continue', 'allow'],
     ['git -C apps/web rebase origin/main', 'allow'],
   ],
+  'bypass variants': [
+    ['git -C . reset --hard', 'deny'],
+    ['git -C apps/web -c color.ui=never reset --hard', 'deny'],
+    ['git --git-dir=.git --work-tree=. clean -fd', 'deny'],
+    ['git --no-pager push -f', 'deny'],
+    ['cd x && git clean -fd', 'deny'],
+    ['git status; git reset --hard', 'deny'],
+    ['git fetch || git reset --hard origin/main', 'deny'],
+    ['echo y | git clean -f', 'deny'],
+    ['git status\ngit push --force', 'deny'],
+    ['(cd apps/web && git push -f)', 'deny'],
+    ['GIT_TRACE=1 git push -f', 'deny'],
+    ['/usr/bin/git push --force', 'deny'],
+    ['bash -c "git reset --hard"', 'deny'],
+    ['git stash list && git stash clear', 'ask'],
+    ['git branch -D feat/a && git reset --hard', 'deny'],
+    ['git push origin', 'deny', onMain],
+    ['cd ' + onMain + ' && git push', 'deny', onFeature],
+    ['find . -name src -exec rm -rf {} +', 'deny'],
+    // git accepts any unambiguous prefix of a long option.
+    ['git reset --har', 'deny'],
+    ['git push --forc origin feat/quiz-timer', 'deny'],
+    ['git push --force-with origin feat/quiz-timer', 'ask'],
+    ['git commit --no-verif -m "chore: skip hooks"', 'deny'],
+    ['git clean --forc', 'deny'],
+    ['git branch --del --forc feat/quiz-timer', 'ask'],
+  ],
+  'ordinary commands pass through': [
+    ['git status', 'allow'],
+    ['git diff --stat main...HEAD', 'allow'],
+    ['git log --oneline -5', 'allow'],
+    ['git add -A', 'allow'],
+    ['git commit -m "feat(web): add the quiz timer"', 'allow'],
+    ['git commit -am "fix(api): reject an empty Option -n"', 'allow'],
+    ['git commit -m "docs: mention --no-verify is denied"', 'allow'],
+    ['git push -u origin feat/quiz-timer', 'allow'],
+    ['git push origin HEAD', 'allow', onFeature],
+    ['git push', 'allow', onFeature],
+    ['git branch -d feat/merged', 'allow'],
+    ['git checkout -b feat/quiz-timer', 'allow'],
+    ['git checkout main', 'allow'],
+    ['git restore --staged apps/web/src/main.tsx', 'allow'],
+    ['git restore --staged .', 'allow'],
+    ['git stash', 'allow'],
+    ['git stash pop', 'allow'],
+    ['git clean -n', 'allow'],
+    ['git reset --soft HEAD~1', 'allow'],
+    ['git tag v1.0.0', 'allow'],
+    ['pnpm test', 'allow'],
+    ['grep -rn "reset --hard" docs', 'allow'],
+    ['rm apps/web/src/old.ts', 'allow'],
+    ['find . -name "*.log" -print', 'allow'],
+    ['git commit --no-edit', 'allow'],
+  ],
 };
-
-const bypasses = [
-  ['git -C . reset --hard', 'deny'],
-  ['git -C apps/web -c color.ui=never reset --hard', 'deny'],
-  ['git --git-dir=.git --work-tree=. clean -fd', 'deny'],
-  ['git --no-pager push -f', 'deny'],
-  ['cd x && git clean -fd', 'deny'],
-  ['git status; git reset --hard', 'deny'],
-  ['git fetch || git reset --hard origin/main', 'deny'],
-  ['echo y | git clean -f', 'deny'],
-  ['git status\ngit push --force', 'deny'],
-  ['(cd apps/web && git push -f)', 'deny'],
-  ['GIT_TRACE=1 git push -f', 'deny'],
-  ['/usr/bin/git push --force', 'deny'],
-  ['bash -c "git reset --hard"', 'deny'],
-  ['git stash list && git stash clear', 'ask'],
-  ['git branch -D feat/a && git reset --hard', 'deny'],
-  ['git push origin', 'deny', onMain],
-  ['cd ' + onMain + ' && git push', 'deny', onFeature],
-];
-
-const ordinary = [
-  ['git status', 'allow'],
-  ['git diff --stat main...HEAD', 'allow'],
-  ['git log --oneline -5', 'allow'],
-  ['git add -A', 'allow'],
-  ['git commit -m "feat(web): add the quiz timer"', 'allow'],
-  ['git commit -am "fix(api): reject an empty Answer -n"', 'allow'],
-  ['git commit -m "docs: mention --no-verify is denied"', 'allow'],
-  ['git push -u origin feat/quiz-timer', 'allow'],
-  ['git push origin HEAD', 'allow', onFeature],
-  ['git push', 'allow', onFeature],
-  ['git branch -d feat/merged', 'allow'],
-  ['git checkout -b feat/quiz-timer', 'allow'],
-  ['git checkout main', 'allow'],
-  ['git restore --staged apps/web/src/main.tsx', 'allow'],
-  ['git restore --staged .', 'allow'],
-  ['git stash', 'allow'],
-  ['git stash pop', 'allow'],
-  ['git clean -n', 'allow'],
-  ['git reset --soft HEAD~1', 'allow'],
-  ['git tag v1.0.0', 'allow'],
-  ['pnpm test', 'allow'],
-  ['grep -rn "reset --hard" docs', 'allow'],
-  ['rm apps/web/src/old.ts', 'allow'],
-];
 
 for (const [group, cases] of Object.entries(table)) {
   describe(group, () => {
@@ -177,18 +187,6 @@ for (const [group, cases] of Object.entries(table)) {
     }
   });
 }
-
-describe('bypass variants', () => {
-  for (const [command, expected, cwd] of bypasses) {
-    test(command, () => assert.equal(run(command, cwd).decision, expected));
-  }
-});
-
-describe('ordinary commands pass through', () => {
-  for (const [command, expected, cwd] of ordinary) {
-    test(command, () => assert.equal(run(command, cwd).decision, expected));
-  }
-});
 
 describe('the agent sees why', () => {
   test('a deny names the rule', () => {
@@ -230,9 +228,6 @@ describe('wiring', () => {
 
 describe('other tools pass through', () => {
   test('a non-Bash tool is ignored', () => {
-    const payload = { tool_name: 'Read', tool_input: { file_path: 'git push -f' } };
-    const result = spawnSync('node', [hook], { input: JSON.stringify(payload), encoding: 'utf8' });
-    assert.equal(result.status, 0);
-    assert.equal(result.stdout, '');
+    assert.equal(run('git push -f', projectRoot, 'Read').decision, 'allow');
   });
 });
