@@ -86,9 +86,7 @@
         "apps/web/.claude",
         "apps/api/.claude"
       ],
-      "denyRead": [
-        "/**/.env.*"
-      ],
+      "denyRead": ["/**/.env.*"],
       "allowRead": [
         "**/.env.example",
         "**/.env.development",
@@ -116,7 +114,6 @@
           {
             "type": "command",
             "command": "node \"$(git -C \"$CLAUDE_PROJECT_DIR\" rev-parse --show-toplevel)/.claude/hooks/git-guard.mjs\"",
-            "onFailure": "block",
             "statusMessage": "Checking git guardrails"
           }
         ]
@@ -127,8 +124,19 @@
           {
             "type": "command",
             "command": "node \"$(git -C \"$CLAUDE_PROJECT_DIR\" rev-parse --show-toplevel)/.claude/hooks/guardrail-lock.mjs\"",
-            "onFailure": "block",
             "statusMessage": "Checking guardrail files"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"$(git -C \"$CLAUDE_PROJECT_DIR\" rev-parse --show-toplevel)\" && jq -r '.tool_input.file_path' | xargs pnpm exec prettier --write --ignore-unknown",
+            "statusMessage": "Formatting"
           }
         ]
       }
