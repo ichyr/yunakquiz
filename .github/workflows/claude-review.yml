@@ -10,7 +10,7 @@ on:
   issue_comment:
     types: [created]
 
-# Least access. `issues: read` is needed to read the linked issue in this private repo.
+# Least access. `issues: read` lets the review read the linked issue it checks the PR against (ADR 0007).
 permissions:
   contents: read
   pull-requests: write
