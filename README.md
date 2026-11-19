@@ -22,6 +22,8 @@ pnpm dev:web         # in a second terminal: web app on http://localhost:5173, /
 
 Other web scripts: `pnpm build:web` (production build into `apps/web/dist`), `pnpm storybook` (http://localhost:6006) and `pnpm build-storybook`.
 
+Local config needs no copying: the API's `dev`, `db:migrate` and `db:seed` scripts read the committed `.env.development` (non-secret defaults such as the Docker `DATABASE_URL`), then the gitignored `.env`, whose values win. Put real secrets, and any personal overrides, in `.env`; `.env.example` is its template.
+
 The API runs TypeScript directly on Node (type stripping), with no build step. After changing `apps/api/src/db/schema.ts`, run `pnpm --filter @yunakquiz/api db:generate` to write a migration.
 
 ## Checks
