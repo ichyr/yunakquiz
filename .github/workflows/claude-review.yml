@@ -5,8 +5,6 @@
 name: claude-review
 
 on:
-  pull_request:
-    types: [opened, ready_for_review]
   issue_comment:
     types: [created]
 
@@ -29,14 +27,14 @@ jobs:
     # Job-level, so only runs that pass the `if` queue here: an ordinary comment
     # can't cancel a pending `@claude review`.
     concurrency:
-      group: claude-review-${{ github.event.pull_request.number || github.event.issue.number }}
+      group: claude-review-${{ github.event.issue.number }}
       cancel-in-progress: false
     env:
-      PR_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
+      PR_NUMBER: ${{ github.event.issue.number }}
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: ${{ github.event.pull_request.head.sha || format('refs/pull/{0}/head', github.event.issue.number) }}
+          ref: ${{ format('refs/pull/{0}/head', github.event.issue.number) }}
           fetch-depth: 0
           persist-credentials: false
 
