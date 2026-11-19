@@ -32,7 +32,17 @@ Claude Code quirks that shaped the config:
 - Sandbox paths without a leading `/`, and `Read(**/…)` rules, resolve from the start folder. So the rules are absolute patterns: `Read(//**/.env)` and `/**/.env.*`. Absolute `allowRead` exceptions were ignored, so each exception is listed twice, as `**/…` (start at the root) and `../../…` (start in `apps/*`). Side effect: from a root start, `.env.example` and `.env.development` are also readable two folders above the repo.
 - The hook path is built from `git rev-parse --show-toplevel`, not the start folder, so it works from any start folder.
 
+Verified: the exclusion works only on a bare command. `git push -u origin <branch> 2>&1 | tail -5` stayed sandboxed and failed with `Host key verification failed`, because the sandbox hides `~/.ssh` and `tail` is not in `excludedCommands`. The agent had to retry with the sandbox disabled. So excluded commands are run bare, with no pipe, `&&`, `;` or `cd … &&` prefix; CLAUDE.md says so.
+
 Still open: `pnpm install` and `pnpm test:e2e` inside the sandbox, the API reaching Postgres on `localhost:5432` from the sandbox, the excluded commands prompting as intended, and a sandboxed `git commit` in a git worktree have not been verified yet.
+
+## How to verify a guardrail
+
+Verify with tests, not by launching Claude Code. Subagents that built throwaway repo copies and ran `claude -p` against them cost far more than the check was worth (see [the token usage analysis](../18112026-complete-token-usage-analisys.md)).
+
+- **Hooks** (git-guard, guardrail-lock): add a row to the `node:test` table in `.claude/hooks/*.test.mjs`, which feeds the hook the JSON Claude Code would send on stdin, and run `pnpm test:guardrails`. A new bypass variant is a new row.
+- **Permission rules and sandbox settings**: these cannot be unit tested. Read the config against the Claude Code docs, then list one manual check in the PR's Verification section for a person to run in a real session (for example, "`cat ~/.ssh/config` is blocked").
+- **Agents do not run `claude -p`**, nested or in a copy of the repo, to check a guardrail.
 
 ## `.env` files
 

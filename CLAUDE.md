@@ -20,7 +20,9 @@ pnpm workspaces monorepo:
 - Quiz logic (shuffling, scoring, building the Review) goes in `packages/core`, never in components or route handlers. See ADR 0002.
 - The API returns Correct Options and Explanations; checking happens in the browser. See ADR 0001.
 - When a skill disagrees with this repo's docs or an ADR, the repo wins.
-- Bash runs in a sandbox: no reading `.env` or home credentials, network open to npm, GitHub and Playwright downloads, other hosts prompt. `docker`, `pnpm db:up`, `gh`, `git push`, `git fetch` and `git pull` run outside it. When a command fails on a blocked read or host, that is the sandbox, not a bug. See [ADR 0007](docs/adr/0007-agent-guardrails.md).
+- Bash runs in a sandbox: no reading `.env` or home credentials, network open to npm, GitHub and Playwright downloads, other hosts prompt. `docker`, `pnpm db:up`, `gh`, `git push`, `git fetch` and `git pull` run outside it, but only when run bare: a pipe (`| tail`), `&&`, `;` or a `cd … &&` prefix keeps the whole command sandboxed, and it then fails on `~/.ssh`. When a command fails on a blocked read or host, that is the sandbox, not a bug. See [ADR 0007](docs/adr/0007-agent-guardrails.md).
+- Verify guardrails with `pnpm test:guardrails` and a manual check in the PR, never by running `claude -p`. See [ADR 0007](docs/adr/0007-agent-guardrails.md#how-to-verify-a-guardrail).
+- Delegating to subagents: follow [Delegating work to agents](docs/contributing.md#delegating-work-to-agents).
 
 ## Commands
 
