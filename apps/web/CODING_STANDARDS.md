@@ -2,7 +2,7 @@
 
 - Start independent requests in parallel; never await them one after another. ([async-parallel](../../.agents/skills/vercel-react-best-practices/rules/async-parallel.md))
 - Import from the module itself, not through a barrel file. ([bundle-barrel-imports](../../.agents/skills/vercel-react-best-practices/rules/bundle-barrel-imports.md))
-- Load routes lazily. ([bundle-dynamic-imports](../../.agents/skills/vercel-react-best-practices/rules/bundle-dynamic-imports.md))
+- Load route pages lazily with React Router's `lazy` route property.
 - Compute derived state while rendering; never sync it with an effect. ([rerender-derived-state-no-effect](../../.agents/skills/vercel-react-best-practices/rules/rerender-derived-state-no-effect.md))
 - Never define a component inside another component. ([rerender-no-inline-components](../../.agents/skills/vercel-react-best-practices/rules/rerender-no-inline-components.md))
 - Use functional `setState` when the next state depends on the previous one. ([rerender-functional-setstate](../../.agents/skills/vercel-react-best-practices/rules/rerender-functional-setstate.md))
