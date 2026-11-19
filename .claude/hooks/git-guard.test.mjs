@@ -151,6 +151,50 @@ const table = {
     ['git clean --forc', 'deny'],
     ['git branch --del --forc feat/quiz-timer', 'ask'],
   ],
+  'writes to guardrail files: deny': [
+    ["echo '{}' > .claude/settings.json", 'deny'],
+    ['echo x >> .github/workflows/ci.yml', 'deny'],
+    ['printf x >.claude/hooks/git-guard.mjs', 'deny'],
+    ['cat /tmp/settings.json > apps/web/.claude/settings.json', 'deny'],
+    ['echo x > .GitHub/workflows/ci.yml', 'deny'],
+    ['echo x > ~/.claude/settings.json', 'deny'],
+    ['echo x > .claude/settings.local.json', 'deny'],
+    ["sed -i '' 's/deny/allow/' .claude/settings.json", 'deny'],
+    ['sed -i.bak s/a/b/ .github/workflows/ci.yml', 'deny'],
+    ["perl -pi -e 's/a/b/' .claude/settings.json", 'deny'],
+    ['cp /tmp/settings.json .claude/settings.json', 'deny'],
+    ['cp -t .github/workflows /tmp/evil.yml', 'deny'],
+    ['install -m 644 /tmp/x.yml .github/workflows/x.yml', 'deny'],
+    ['mv .claude/hooks/git-guard.mjs /tmp/', 'deny'],
+    ['mv .claude .claude-old', 'deny'],
+    ['ln -sf /tmp/evil.json apps/api/.claude/settings.json', 'deny'],
+    ['rm apps/web/.claude/settings.json', 'deny'],
+    ['touch .github/workflows/new.yml', 'deny'],
+    ['echo x | tee .github/workflows/ci.yml', 'deny'],
+    ['dd if=/tmp/x of=.claude/settings.json', 'deny'],
+    ['git checkout main -- .claude/settings.json', 'deny'],
+    ['git restore .github/workflows/ci.yml', 'deny'],
+    ['git rm .claude/hooks/git-guard.mjs', 'deny'],
+    ['cd apps/web && echo x > ../../.github/workflows/ci.yml', 'deny'],
+    ['echo x > ../../.claude/settings.json', 'deny', join(projectRoot, 'apps', 'web')],
+    ['bash -c "echo x > .github/workflows/ci.yml"', 'deny'],
+    ['find .github -name "*.yml" -exec sed -i "" s/a/b/ {} +', 'deny'],
+  ],
+  'reading guardrail files: allow': [
+    ['cat .claude/settings.json', 'allow'],
+    ['cat .github/workflows/ci.yml > /tmp/ci.yml', 'allow'],
+    ['cp .github/pull_request_template.md /tmp/pr.md', 'allow'],
+    ["sed -n '1,5p' .claude/settings.json", 'allow'],
+    ['grep -rn deny .claude/settings.json', 'allow'],
+    ['git diff .github', 'allow'],
+    ['git log --oneline -- .claude/hooks', 'allow'],
+    ['git add .github/workflows/ci.yml', 'allow'],
+    ['node --test ".claude/hooks/*.test.mjs"', 'allow'],
+    ['echo x > apps/web/src/notes.txt', 'allow'],
+    ['echo x > .claude/worktrees/notes.txt', 'allow'],
+    ['rm -rf node_modules/resolve/.github', 'allow'],
+    ['ls 2>&1 > /tmp/out.txt', 'allow'],
+  ],
   'ordinary commands pass through': [
     ['git status', 'allow'],
     ['git diff --stat main...HEAD', 'allow'],
@@ -197,6 +241,11 @@ describe('the agent sees why', () => {
   });
   test('rm -rf names the build folders it allows', () => {
     assert.match(run('rm -rf apps').reason, /node_modules/);
+  });
+  test('a write to a guardrail file names the file and the human', () => {
+    const { reason } = run('echo x > .github/workflows/ci.yml');
+    assert.match(reason, /\.github\/workflows\/ci\.yml/);
+    assert.match(reason, /human/);
   });
 });
 

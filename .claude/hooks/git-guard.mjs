@@ -1,11 +1,16 @@
-// PreToolUse hook for Bash: denies destructive git and rm commands, asks before risky ones.
+// PreToolUse hook for Bash: denies destructive git and rm commands, asks before risky ones, and
+// denies commands that write guardrail files (see locked-paths.mjs).
 // The permission rules in .claude/settings.json catch the obvious spellings; this catches the
 // variants prefix rules miss: chained commands, git global options before the subcommand,
 // short-flag clusters, `+refspec` force pushes and pushes that land on main.
+// The guardrail-file check reads the common writers (redirects, tee, sed -i, cp, mv, ln, rm, git
+// checkout/restore of a path...). It is a backstop for Bash that runs outside the sandbox; the
+// sandbox's denyWrite is what stops sandboxed Bash, whatever program does the writing.
 // Plain Node, no dependencies. Tests: git-guard.test.mjs (`pnpm test:guardrails`).
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { basename, isAbsolute, relative, resolve, sep } from 'node:path';
+import { isLocked, lockedReason } from './locked-paths.mjs';
 
 const PROJECT_ROOT = resolve(import.meta.dirname, '..', '..');
 // The project's own build output, as listed in .gitignore. `rm -rf` may delete inside these.
@@ -34,6 +39,23 @@ const PUSH_FLAGS_WITH_VALUE = 'o';
 const CLEAN_FLAGS_WITH_VALUE = 'e';
 const RESTORE_FLAGS_WITH_VALUE = 's';
 const COMMIT_FLAGS_WITH_VALUE = 'mFCcSut';
+// Programs that write every path they are given, and those that write only their last one.
+const WRITES_EVERY_PATH = new Set([
+  'mv',
+  'ln',
+  'rm',
+  'rmdir',
+  'unlink',
+  'touch',
+  'truncate',
+  'tee',
+  'chmod',
+  'chown',
+  'chgrp',
+  'mkdir',
+  'shred',
+]);
+const WRITES_LAST_PATH = new Set(['cp', 'install', 'rsync']);
 const WRAPPERS = new Set(['sudo', 'command', 'env', 'nice', 'nohup', 'time', 'exec', 'xargs']);
 const SHELLS = new Set(['bash', 'sh', 'zsh', 'dash']);
 
@@ -90,28 +112,41 @@ function tokenize(command) {
   return tokens;
 }
 
-/** Groups tokens into simple commands (word lists), dropping redirections and env assignments. */
+/**
+ * Groups tokens into simple commands: their words, without env assignments and wrappers, and the
+ * files their output redirections write.
+ */
 function simpleCommands(command) {
   const commands = [];
   let words = [];
+  let writes = [];
+  const flush = () => {
+    const stripped = stripPrefixes(words);
+    if (stripped.length > 0 || writes.length > 0) commands.push({ words: stripped, writes });
+    words = [];
+    writes = [];
+  };
   const tokens = tokenize(command);
   for (let i = 0; i < tokens.length; i++) {
     const token = tokens[i];
+    const redirect = /^\d*(>>?|<)(.*)$/.exec(token);
     if (SEPARATORS.has(token)) {
-      if (words.length > 0) commands.push(words);
-      words = [];
-    } else if (/^\d*(>>?|<)$/.test(token)) {
-      i++; // `> file`: skip the file too
-    } else if (/^\d*(>>?|<)/.test(token)) {
-      // `>file`, `2>&1`
+      flush();
+    } else if (redirect && redirect[2] === '') {
+      // `> file`: the file is the next token
+      if (redirect[1] !== '<' && i + 1 < tokens.length) writes.push(tokens[i + 1]);
+      i++;
+    } else if (redirect) {
+      // `>file`; `2>&1` duplicates a descriptor and writes no file
+      if (redirect[1] !== '<' && !redirect[2].startsWith('&')) writes.push(redirect[2]);
     } else if ((token === '{' || token === '}') && words.length === 0) {
       // brace group
     } else {
       words.push(token);
     }
   }
-  if (words.length > 0) commands.push(words);
-  return commands.map(stripPrefixes).filter((simple) => simple.length > 0);
+  flush();
+  return commands;
 }
 
 /** Removes `VAR=value` assignments and wrappers such as `sudo` from the front of a command. */
@@ -244,7 +279,19 @@ function checkGit(words, cwd) {
   }
   const subcommand = words[i];
   const args = words.slice(i + 1);
+  return [
+    ...checkGitPaths(subcommand, args, gitCwd),
+    ...checkGitSubcommand(subcommand, args, gitCwd, config),
+  ];
+}
 
+/** `git checkout|restore|rm|mv <paths>` rewrites or removes the paths it names. */
+function checkGitPaths(subcommand, args, cwd) {
+  if (!['checkout', 'restore', 'rm', 'mv'].includes(subcommand)) return [];
+  return lockedWrites(positionals(args, new Set(['-s', '--source'])), cwd);
+}
+
+function checkGitSubcommand(subcommand, args, gitCwd, config) {
   switch (subcommand) {
     case 'push':
       return checkPush(args, gitCwd);
@@ -357,21 +404,61 @@ function checkRm(args, cwd) {
   ];
 }
 
-/** The commands `find` runs through `-exec`, `-execdir` or `-ok`, each up to its `;` or `+`. */
+/**
+ * The commands `find` runs through `-exec`, `-execdir` or `-ok`, each up to its `;` or `+`, with
+ * `{}` standing for the folders `find` starts from.
+ */
 function findExecs(args) {
   const commands = [];
+  const end = args.findIndex((arg) => arg.startsWith('-') || arg === '!' || arg === '(');
+  const roots = end === -1 ? args : args.slice(0, end);
   args.forEach((arg, i) => {
     if (!['-exec', '-execdir', '-ok', '-okdir'].includes(arg)) return;
     const rest = args.slice(i + 1);
-    const end = rest.findIndex((word) => word === ';' || word === '+');
-    commands.push(stripPrefixes(end === -1 ? rest : rest.slice(0, end)));
+    const stop = rest.findIndex((word) => word === ';' || word === '+');
+    const words = stripPrefixes(stop === -1 ? rest : rest.slice(0, stop));
+    commands.push(
+      words.flatMap((word) => (word === '{}' ? (roots.length > 0 ? roots : ['.']) : [word])),
+    );
   });
   return commands.filter((words) => words.length > 0);
+}
+
+/** A deny for each of `targets`, run from `cwd`, that is a guardrail file. */
+function lockedWrites(targets, cwd) {
+  return targets
+    .filter((target) => isLocked(target, cwd))
+    .map((target) => deny(lockedReason(target)));
+}
+
+/** The paths a simple command writes, for the programs this guard knows. */
+function writtenPaths(program, args) {
+  if (WRITES_EVERY_PATH.has(program)) return positionals(args);
+  if (WRITES_LAST_PATH.has(program)) {
+    const targetDirectory = args.flatMap((arg, i) => {
+      if (arg === '-t' || arg === '--target-directory') return [args[i + 1] ?? ''];
+      if (arg.startsWith('--target-directory=')) return [arg.slice('--target-directory='.length)];
+      return [];
+    });
+    return [...positionals(args).slice(-1), ...targetDirectory];
+  }
+  if (
+    program === 'sed' &&
+    hasFlag(args, { long: ['--in-place'], short: 'i', shortWithValue: 'efl' })
+  )
+    return positionals(args, new Set(['-e', '-f', '--expression', '--file']));
+  if (program === 'perl' && hasFlag(args, { short: 'i', shortWithValue: 'eEIMmx' }))
+    return positionals(args, new Set(['-e', '-E']));
+  if (program === 'dd')
+    return args.filter((arg) => arg.startsWith('of=')).map((arg) => arg.slice(3));
+  return [];
 }
 
 /** Every deny or ask that applies to one simple command run from `cwd`. */
 function checkCommand(words, cwd) {
   const program = basename(words[0]);
+  const locked = lockedWrites(writtenPaths(program, words.slice(1)), cwd);
+  if (locked.length > 0) return locked;
   if (program === 'git') return checkGit(words, cwd);
   if (program === 'rm') return checkRm(words.slice(1), cwd);
   if (program === 'find')
@@ -386,7 +473,9 @@ function checkCommand(words, cwd) {
 function evaluate(command, cwd) {
   const results = [];
   let here = cwd;
-  for (const words of simpleCommands(command)) {
+  for (const { words, writes } of simpleCommands(command)) {
+    results.push(...lockedWrites(writes, here));
+    if (words.length === 0) continue;
     if (words[0] === 'cd') here = resolve(here, words[1] ?? process.env.HOME ?? here);
     else results.push(...checkCommand(words, here));
   }
