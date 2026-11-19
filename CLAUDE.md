@@ -20,11 +20,12 @@ pnpm workspaces monorepo:
 - Quiz logic (shuffling, scoring, building the Review) goes in `packages/core`, never in components or route handlers. See ADR 0002.
 - The API returns Correct Options and Explanations; checking happens in the browser. See ADR 0001.
 - When a skill disagrees with this repo's docs or an ADR, the repo wins.
+- Bash runs in a sandbox: no reading `.env` or home credentials, network only to npm, GitHub and Playwright downloads. `docker`, `pnpm db:up`, `gh`, `git push`, `git fetch` and `git pull` run outside it. When a command fails on a blocked read or host, that is the sandbox, not a bug. See [ADR 0007](docs/adr/0007-agent-guardrails.md).
 
 ## Commands
 
 - `pnpm db:up`: start Postgres in Docker Compose. Needed before `pnpm test`, since the API tests use the real database.
-- `pnpm test`, `pnpm typecheck`, `pnpm lint`: run across all workspaces.
+- `pnpm test`, `pnpm typecheck`, `pnpm lint`: run across all workspaces. `pnpm test` first runs `pnpm test:guardrails`, the git-guard hook's tests.
 - `pnpm check:stories`: checks every web component has a Storybook story.
 
 ## Commits
