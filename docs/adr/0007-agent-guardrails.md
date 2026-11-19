@@ -32,6 +32,8 @@ Claude Code quirks that shaped the config:
 - Sandbox paths without a leading `/`, and `Read(**/…)` rules, resolve from the start folder. So the rules are absolute patterns: `Read(//**/.env)` and `/**/.env.*`. Absolute `allowRead` exceptions were ignored, so each exception is listed twice, as `**/…` (start at the root) and `../../…` (start in `apps/*`). Side effect: from a root start, `.env.example` and `.env.development` are also readable two folders above the repo.
 - The hook path is built from `git rev-parse --show-toplevel`, not the start folder, so it works from any start folder.
 
+Verified: the exclusion works only on a bare command. `git push -u origin <branch> 2>&1 | tail -5` stayed sandboxed and failed with `Host key verification failed`, because the sandbox hides `~/.ssh` and `tail` is not in `excludedCommands`. The agent had to retry with the sandbox disabled. So excluded commands are run bare, with no pipe, `&&`, `;` or `cd … &&` prefix; CLAUDE.md says so.
+
 Still open: `pnpm install` and `pnpm test:e2e` inside the sandbox, the API reaching Postgres on `localhost:5432` from the sandbox, the excluded commands prompting as intended, and a sandboxed `git commit` in a git worktree have not been verified yet.
 
 ## `.env` files
