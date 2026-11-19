@@ -7,6 +7,9 @@
   "permissions": {
     "deny": [
       "Bash(claude -p*)",
+      "Bash(claude --print*)",
+      "Bash(* claude -p*)",
+      "Bash(* claude --print*)",
       "Bash(git push --force)",
       "Bash(git push --force *)",
       "Bash(git push -f)",
