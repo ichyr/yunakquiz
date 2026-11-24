@@ -38,14 +38,25 @@ export function AttemptView({ attempt, onChoose, onFinish, titleRef }: AttemptVi
         ))}
       </ol>
 
-      <div className="sticky bottom-0 -mx-4 flex items-center justify-between gap-4 border-t bg-background/95 px-4 py-3 backdrop-blur">
+      <div className="sticky bottom-0 -mx-4 flex items-center justify-between gap-4 border-t bg-background/95 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur">
         <div className="flex flex-col text-sm">
           <p aria-live="polite" className="font-medium tabular-nums">
             {t('attempt.progress', { answered: answeredCount(attempt), total })}
           </p>
-          {!ready && <p className="text-xs text-muted-foreground">{t('attempt.finishHint')}</p>}
+          {!ready && (
+            <p id="finish-hint" className="text-xs text-muted-foreground">
+              {t('attempt.finishHint')}
+            </p>
+          )}
         </div>
-        <Button size="lg" disabled={!ready} onClick={onFinish}>
+        <Button
+          size="lg"
+          aria-disabled={!ready}
+          aria-describedby={ready ? undefined : 'finish-hint'}
+          onClick={() => {
+            if (ready) onFinish();
+          }}
+        >
           {t('attempt.finish')}
         </Button>
       </div>

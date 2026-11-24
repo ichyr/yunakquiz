@@ -8,7 +8,7 @@ export function LoadingState() {
   return (
     <output className="flex items-center justify-center gap-2 py-10 text-muted-foreground">
       <DocumentTitle />
-      <LoaderCircleIcon aria-hidden className="size-5 animate-spin" />
+      <LoaderCircleIcon aria-hidden className="size-5 animate-spin motion-reduce:animate-none" />
       {t('status.loading')}
     </output>
   );
