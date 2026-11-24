@@ -19,6 +19,7 @@ test('offline shows the offline message, and loading resumes on reconnect', asyn
 
   await expect(page.getByText(uk.status.offlineTitle)).toBeVisible();
   await expect(page.getByRole('button', { name: uk.status.retry })).toHaveCount(0);
+  await expect(page.locator('output.sr-only')).toHaveText('');
 
   await context.setOffline(false);
 

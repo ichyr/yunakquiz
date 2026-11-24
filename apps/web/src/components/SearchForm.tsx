@@ -1,6 +1,7 @@
 import { SearchIcon } from 'lucide-react';
-import { useState, type FormEvent } from 'react';
+import { useState, useTransition, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigation } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -18,7 +19,11 @@ export function SearchForm({ addressQuery = '', onSearch }: SearchFormProps) {
   // records it before the address renders, so Back to the old address still differs and
   // resets the text even if React never rendered the in-between address.
   const [syncedQuery, setSyncedQuery] = useState(addressQuery);
-  if (syncedQuery !== addressQuery) {
+  // While the submit's navigation is pending (a screen's code loading, say) the address is
+  // still the old one, so the text keeps what was submitted instead of reverting to it.
+  const [submitting, startSubmit] = useTransition();
+  const navigating = useNavigation().state !== 'idle';
+  if (syncedQuery !== addressQuery && !submitting && !navigating) {
     setSyncedQuery(addressQuery);
     setQuery(addressQuery);
   }
@@ -26,7 +31,7 @@ export function SearchForm({ addressQuery = '', onSearch }: SearchFormProps) {
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSyncedQuery(query.trim());
-    onSearch(query.trim());
+    startSubmit(() => onSearch(query.trim()));
   }
 
   return (

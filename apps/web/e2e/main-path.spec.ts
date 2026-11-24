@@ -44,7 +44,10 @@ test('search, take a Quiz, see the Review, try again', async ({ page }) => {
   await finish.focus();
   await page.keyboard.press('Enter');
   await expect(finish).toBeFocused();
-  await expect(page.getByRole('radiogroup')).not.toHaveCount(0);
+  // Still in the Attempt: no Review, no Score.
+  await expect(
+    page.getByRole('heading', { name: `${uk.review.title} · ${uk.review.score}` }),
+  ).toHaveCount(0);
 
   const questions = page.getByRole('radiogroup');
   await expect(questions).toHaveCount(ivanBohun.questions.length);
@@ -78,4 +81,49 @@ test('search, take a Quiz, see the Review, try again', async ({ page }) => {
   expect(await page.evaluate(() => window.scrollY)).toBe(0);
   await expect(page.getByRole('radio', { checked: true })).toHaveCount(0);
   await expect(finish).toHaveAttribute('aria-disabled', 'true');
+});
+
+test('the search text stays while the Search screen loads', async ({ page }) => {
+  await page.goto('/');
+  // Hold the Search chunk, so the navigation stays pending.
+  await page.route('**/SearchPage*', async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await route.continue();
+  });
+  const searchbox = page.getByRole('searchbox', { name: uk.search.label });
+  await searchbox.fill('Богун');
+  await page.keyboard.press('Enter');
+
+  // Past the first render, while the navigation is still pending.
+  await page.waitForTimeout(300);
+  expect(new URL(page.url()).pathname).toBe('/');
+  expect(await searchbox.inputValue()).toBe('Богун');
+  await expect(page).toHaveURL(/\/search\?q=/);
+  await expect(searchbox).toHaveValue('Богун');
+});
+
+test('the Search status region holds the results text only when there are results', async ({
+  page,
+}) => {
+  const status = page.locator('output.sr-only');
+  await page.goto('/search?q=%D0%91%D0%BE%D0%B3%D1%83%D0%BD');
+  await expect(page.getByRole('link', { name: new RegExp(ivanBohun.title) })).toBeVisible();
+  await expect(status).toHaveText(uk.search.resultsFor.replace('{{query}}', 'Богун'));
+
+  await page.goto('/search?q=zzzzqqqq');
+  await expect(page.getByText(uk.search.noResults)).toBeVisible();
+  await expect(status).toHaveText('');
+});
+
+test('one title while Search loads, the app name alone', async ({ page }) => {
+  await page.route('**/api/quizzes*', async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    await route.continue();
+  });
+  await page.goto('/search?q=%D0%91%D0%BE%D0%B3%D1%83%D0%BD');
+  await expect(page.getByText(uk.status.loading)).toBeVisible();
+  await expect(page.locator('title')).toHaveCount(1);
+  await expect(page).toHaveTitle(uk.app.name);
+  await expect(page).toHaveTitle(`Богун · ${uk.app.name}`);
+  await expect(page.locator('title')).toHaveCount(1);
 });
