@@ -1,3 +1,4 @@
+import { DocumentTitle } from './DocumentTitle.tsx';
 import { useTranslation } from 'react-i18next';
 import { PageMessage } from './PageMessage.tsx';
 
@@ -8,6 +9,9 @@ import { PageMessage } from './PageMessage.tsx';
 export function OfflineState() {
   const { t } = useTranslation();
   return (
-    <PageMessage title={t('status.offlineTitle')} description={t('status.offlineDescription')} />
+    <>
+      <DocumentTitle />
+      <PageMessage title={t('status.offlineTitle')} description={t('status.offlineDescription')} />
+    </>
   );
 }

@@ -1,3 +1,4 @@
+import { DocumentTitle } from '@/components/DocumentTitle';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router';
 import { useQuizSearch } from '@/api/queries';
@@ -19,6 +20,7 @@ export function SearchPage() {
 
   return (
     <div className="flex flex-col gap-6">
+      <DocumentTitle page={query || t('search.title')} />
       <section className="flex flex-col gap-3">
         <PageTitle>{t('search.title')}</PageTitle>
         <SearchForm addressQuery={query} onSearch={search} />

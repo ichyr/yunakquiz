@@ -12,11 +12,14 @@ const correctOptionByPrompt = new Map(
 );
 
 test('search, take a Quiz, see the Review, try again', async ({ page }) => {
+  const appName = uk.app.name;
   await page.goto('/');
+  await expect(page).toHaveTitle(appName);
   await page.getByRole('searchbox', { name: uk.search.label }).fill('Богун');
   await page.keyboard.press('Enter');
 
   await expect(page).toHaveURL(/\/search\?q=/);
+  await expect(page).toHaveTitle(`Богун · ${appName}`);
 
   await expect(page.getByRole('link', { name: new RegExp(ivanBohun.title) })).toBeVisible();
   const searchbox = page.getByRole('searchbox', { name: uk.search.label });
@@ -31,6 +34,7 @@ test('search, take a Quiz, see the Review, try again', async ({ page }) => {
   await page.getByRole('link', { name: new RegExp(ivanBohun.title) }).click();
 
   await expect(page).toHaveURL(`/quizzes/${ivanBohun.slug}`);
+  await expect(page).toHaveTitle(`${ivanBohun.title} · ${appName}`);
   const finish = page.getByRole('button', { name: uk.attempt.finish });
   await expect(finish).toBeDisabled();
 
@@ -51,6 +55,7 @@ test('search, take a Quiz, see the Review, try again', async ({ page }) => {
   await expect(page).toHaveURL(`/quizzes/${ivanBohun.slug}`);
   await expect(page.getByText(`${total} / ${total}`, { exact: true })).toBeVisible();
   await expect(page.getByText(uk.review.perfect)).toBeVisible();
+  await expect(page).toHaveTitle(`${ivanBohun.title} · ${appName}`);
   await expect(
     page.getByRole('heading', { name: `${uk.review.title} · ${uk.review.score}` }),
   ).toBeFocused();

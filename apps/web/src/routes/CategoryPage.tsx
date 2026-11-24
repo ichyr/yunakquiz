@@ -1,3 +1,4 @@
+import { DocumentTitle } from '@/components/DocumentTitle';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router';
 import { useCategory } from '@/api/queries';
@@ -18,6 +19,7 @@ export function CategoryPage() {
   const { category: info, quizzes } = category.data;
   return (
     <div className="flex flex-col gap-6">
+      <DocumentTitle page={info.name} />
       <PageTitle>{info.name}</PageTitle>
       {quizzes.length === 0 ? (
         <PageMessage title={t('category.noQuizzes')} />
