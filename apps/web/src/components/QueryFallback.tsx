@@ -1,9 +1,14 @@
 import type { UseQueryResult } from '@tanstack/react-query';
 import { isNotFound } from '@/api/client';
-import { ErrorState } from '@/components/ErrorState';
+import { LoadErrorState } from '@/components/LoadErrorState';
 import { LoadingState } from '@/components/LoadingState';
+import { NotFoundState } from '@/components/NotFoundState';
+import { OfflineState } from '@/components/OfflineState';
 
-/** What a page shows while its query has no data: loading, not found, or a retryable error. */
+/**
+ * What a page shows while its query has no data. Checked in order: paused (offline, so the
+ * query waits for the network instead of failing), then error, then loading.
+ */
 export function QueryFallback({
   query,
   notFoundTitle,
@@ -11,9 +16,10 @@ export function QueryFallback({
   query: UseQueryResult;
   notFoundTitle?: string;
 }) {
-  if (!query.isError) return <LoadingState />;
-  if (notFoundTitle && isNotFound(query.error)) {
-    return <ErrorState notFound title={notFoundTitle} />;
+  if (query.isPaused) return <OfflineState />;
+  if (query.isError) {
+    if (notFoundTitle && isNotFound(query.error)) return <NotFoundState title={notFoundTitle} />;
+    return <LoadErrorState onRetry={() => void query.refetch()} />;
   }
-  return <ErrorState onRetry={() => void query.refetch()} />;
+  return <LoadingState />;
 }

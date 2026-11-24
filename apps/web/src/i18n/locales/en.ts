@@ -64,5 +64,7 @@ export const en: Messages = {
     categoryNotFound: 'Category not found',
     pageNotFound: 'Page not found',
     goHome: 'Go to Home',
+    offlineTitle: 'You are offline',
+    offlineDescription: 'Loading will resume as soon as you are back online.',
   },
 };

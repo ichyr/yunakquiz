@@ -62,6 +62,8 @@ export const uk = {
     categoryNotFound: 'Категорію не знайдено',
     pageNotFound: 'Сторінку не знайдено',
     goHome: 'На головну',
+    offlineTitle: 'Немає з’єднання з інтернетом',
+    offlineDescription: 'Завантаження продовжиться, щойно з’єднання відновиться.',
   },
 };
 
