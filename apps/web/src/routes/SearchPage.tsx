@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router';
 import { useQuizSearch } from '@/api/queries';
 import { PageMessage } from '@/components/PageMessage';
+import { PageTitle } from '@/components/PageTitle';
 import { QuizList } from '@/components/QuizList';
 import { SearchForm } from '@/components/SearchForm';
 import { QueryFallback } from '@/components/QueryFallback';
@@ -17,7 +18,7 @@ export function SearchPage() {
   return (
     <div className="flex flex-col gap-6">
       <section className="flex flex-col gap-3">
-        <h1 className="text-2xl font-bold tracking-tight">{t('search.title')}</h1>
+        <PageTitle>{t('search.title')}</PageTitle>
         {/* Keyed so Back/Forward refills the box with that address's query. */}
         <SearchForm key={query} defaultQuery={query} onSearch={search} />
       </section>

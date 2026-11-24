@@ -40,12 +40,18 @@ test('search, take a Quiz, see the Review, try again', async ({ page }) => {
   await expect(page).toHaveURL(`/quizzes/${ivanBohun.slug}`);
   await expect(page.getByText(`${total} / ${total}`, { exact: true })).toBeVisible();
   await expect(page.getByText(uk.review.perfect)).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: `${uk.review.title} · ${uk.review.score}` }),
+  ).toBeFocused();
+  expect(await page.evaluate(() => window.scrollY)).toBe(0);
   await expect(page.getByText(uk.review.explanation, { exact: true })).toHaveCount(total);
 
   await page.getByRole('button', { name: uk.review.tryAgain }).first().click();
 
   await expect(page).toHaveURL(`/quizzes/${ivanBohun.slug}`);
   await expect(questions).toHaveCount(total);
+  await expect(page.getByRole('heading', { level: 1, name: ivanBohun.title })).toBeFocused();
+  expect(await page.evaluate(() => window.scrollY)).toBe(0);
   await expect(page.getByRole('radio', { checked: true })).toHaveCount(0);
   await expect(finish).toBeDisabled();
 });

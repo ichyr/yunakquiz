@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router';
 import { useCategory } from '@/api/queries';
 import { PageMessage } from '@/components/PageMessage';
+import { PageTitle } from '@/components/PageTitle';
 import { QuizList } from '@/components/QuizList';
 import { QueryFallback } from '@/components/QueryFallback';
 
@@ -17,7 +18,7 @@ export function CategoryPage() {
   const { category: info, quizzes } = category.data;
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold tracking-tight">{info.name}</h1>
+      <PageTitle>{info.name}</PageTitle>
       {quizzes.length === 0 ? (
         <PageMessage title={t('category.noQuizzes')} />
       ) : (
