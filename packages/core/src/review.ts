@@ -22,6 +22,15 @@ export interface ReviewItem {
   explanation: string;
 }
 
+export type OptionOutcome = 'correct' | 'wrong' | 'other';
+
+/** How the Review marks an Option: the Correct Option, a wrongly chosen Option, or neither. */
+export function optionOutcome(item: ReviewItem, optionId: number): OptionOutcome {
+  if (optionId === item.correctOptionId) return 'correct';
+  if (optionId === item.chosenOptionId) return 'wrong';
+  return 'other';
+}
+
 export interface Review {
   score: Score;
   /** One item per Question, in the order shown during the Attempt. */
