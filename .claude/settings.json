@@ -1,12 +1,5 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "model": "opus",
-  "env": {
-    "CLAUDE_CODE_SUBAGENT_MODEL": "sonnet"
-  },
-  "enabledPlugins": {
-    "chrome-devtools-mcp@claude-plugins-official": false
-  },
   "permissions": {
     "deny": [
       "Bash(claude -p*)",
@@ -62,53 +55,7 @@
       "Bash(git stash clear)"
     ]
   },
-  "sandbox": {
-    "enabled": true,
-    "autoAllowBashIfSandboxed": true,
-    "allowUnsandboxedCommands": true,
-    "excludedCommands": [
-      "docker *",
-      "pnpm db:up",
-      "git push *",
-      "git fetch *",
-      "git pull *",
-      "gh *"
-    ],
-    "filesystem": {
-      "allowWrite": [
-        "~/Library/pnpm",
-        "~/.local/share/pnpm",
-        "~/Library/Caches/ms-playwright",
-        "~/.cache/ms-playwright"
-      ],
-      "denyWrite": [
-        ".claude/settings.json",
-        ".claude/settings.local.json",
-        ".claude/hooks",
-        ".github",
-        "apps/web/.claude",
-        "apps/api/.claude"
-      ],
-      "denyRead": ["/**/.env.*"],
-      "allowRead": [
-        "**/.env.example",
-        "**/.env.development",
-        "../../.env.example",
-        "../../.env.development"
-      ]
-    },
-    "network": {
-      "allowedDomains": [
-        "registry.npmjs.org",
-        "github.com",
-        "codeload.github.com",
-        "objects.githubusercontent.com",
-        "cdn.playwright.dev",
-        "playwright.download.prss.microsoft.com"
-      ],
-      "allowLocalBinding": true
-    }
-  },
+  "model": "sonnet",
   "hooks": {
     "PreToolUse": [
       {
@@ -155,6 +102,57 @@
           }
         ]
       }
+    ]
+  },
+  "enabledPlugins": {
+    "chrome-devtools-mcp@claude-plugins-official": false,
+    "caveman@caveman": true
+  },
+  "sandbox": {
+    "enabled": true,
+    "autoAllowBashIfSandboxed": true,
+    "allowUnsandboxedCommands": true,
+    "network": {
+      "allowedDomains": [
+        "registry.npmjs.org",
+        "github.com",
+        "codeload.github.com",
+        "objects.githubusercontent.com",
+        "cdn.playwright.dev",
+        "playwright.download.prss.microsoft.com"
+      ],
+      "allowLocalBinding": true
+    },
+    "filesystem": {
+      "allowWrite": [
+        "~/Library/pnpm",
+        "~/.local/share/pnpm",
+        "~/Library/Caches/ms-playwright",
+        "~/.cache/ms-playwright"
+      ],
+      "denyWrite": [
+        ".claude/settings.json",
+        ".claude/settings.local.json",
+        ".claude/hooks",
+        ".github",
+        "apps/web/.claude",
+        "apps/api/.claude"
+      ],
+      "denyRead": ["/**/.env.*"],
+      "allowRead": [
+        "**/.env.example",
+        "**/.env.development",
+        "../../.env.example",
+        "../../.env.development"
+      ]
+    },
+    "excludedCommands": [
+      "docker *",
+      "pnpm db:up",
+      "git push *",
+      "git fetch *",
+      "git pull *",
+      "gh *"
     ]
   }
 }
