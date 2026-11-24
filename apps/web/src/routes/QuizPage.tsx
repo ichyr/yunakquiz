@@ -1,3 +1,4 @@
+import { DocumentTitle } from '@/components/DocumentTitle';
 import type { Quiz } from '@yunakquiz/core';
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -43,6 +44,7 @@ function QuizAttempt({ quiz }: { quiz: Quiz }) {
 
   return (
     <>
+      <DocumentTitle page={quiz.title} />
       {attempt.phase === 'reviewed' ? (
         <ReviewView
           attempt={attempt}

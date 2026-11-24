@@ -22,14 +22,14 @@
   --muted-foreground: oklch(0.48 0.02 150);
   --accent: oklch(0.93 0.03 148);
   --accent-foreground: oklch(0.3 0.06 148);
-  --success: oklch(0.55 0.14 150);
+  --success: oklch(0.5 0.13 150);
   --success-foreground: oklch(0.985 0.01 150);
   --success-subtle: oklch(0.95 0.05 150);
   --destructive: oklch(0.56 0.2 27);
   --destructive-foreground: oklch(0.985 0.01 27);
   --destructive-subtle: oklch(0.95 0.03 27);
   --border: oklch(0.9 0.015 120);
-  --input: oklch(0.88 0.015 120);
+  --input: oklch(0.6 0.015 120);
   --ring: oklch(0.47 0.1 148);
 }
 

@@ -1,3 +1,4 @@
+import { DocumentTitle } from '@/components/DocumentTitle';
 import { useTranslation } from 'react-i18next';
 import { useCategories } from '@/api/queries';
 import { CategoryList } from '@/components/CategoryList';
@@ -14,6 +15,7 @@ export function HomePage() {
 
   return (
     <div className="flex flex-col gap-8">
+      <DocumentTitle />
       <section className="flex flex-col gap-3">
         <PageTitle>{t('home.title')}</PageTitle>
         <SearchForm onSearch={search} />

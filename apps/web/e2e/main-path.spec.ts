@@ -12,11 +12,14 @@ const correctOptionByPrompt = new Map(
 );
 
 test('search, take a Quiz, see the Review, try again', async ({ page }) => {
+  const appName = uk.app.name;
   await page.goto('/');
+  await expect(page).toHaveTitle(appName);
   await page.getByRole('searchbox', { name: uk.search.label }).fill('Богун');
   await page.keyboard.press('Enter');
 
   await expect(page).toHaveURL(/\/search\?q=/);
+  await expect(page).toHaveTitle(`Богун · ${appName}`);
 
   await expect(page.getByRole('link', { name: new RegExp(ivanBohun.title) })).toBeVisible();
   const searchbox = page.getByRole('searchbox', { name: uk.search.label });
@@ -31,8 +34,17 @@ test('search, take a Quiz, see the Review, try again', async ({ page }) => {
   await page.getByRole('link', { name: new RegExp(ivanBohun.title) }).click();
 
   await expect(page).toHaveURL(`/quizzes/${ivanBohun.slug}`);
+  await expect(page).toHaveTitle(`${ivanBohun.title} · ${appName}`);
   const finish = page.getByRole('button', { name: uk.attempt.finish });
-  await expect(finish).toBeDisabled();
+  await expect(finish).toHaveAttribute('aria-disabled', 'true');
+  await expect(finish).not.toHaveAttribute('disabled');
+  await expect(finish).toHaveAccessibleDescription(uk.attempt.finishHint);
+  // Playwright treats aria-disabled as not enabled, so force the pointer click.
+  await finish.click({ force: true });
+  await finish.focus();
+  await page.keyboard.press('Enter');
+  await expect(finish).toBeFocused();
+  await expect(page.getByRole('radiogroup')).not.toHaveCount(0);
 
   const questions = page.getByRole('radiogroup');
   await expect(questions).toHaveCount(ivanBohun.questions.length);
@@ -51,6 +63,7 @@ test('search, take a Quiz, see the Review, try again', async ({ page }) => {
   await expect(page).toHaveURL(`/quizzes/${ivanBohun.slug}`);
   await expect(page.getByText(`${total} / ${total}`, { exact: true })).toBeVisible();
   await expect(page.getByText(uk.review.perfect)).toBeVisible();
+  await expect(page).toHaveTitle(`${ivanBohun.title} · ${appName}`);
   await expect(
     page.getByRole('heading', { name: `${uk.review.title} · ${uk.review.score}` }),
   ).toBeFocused();
@@ -64,5 +77,5 @@ test('search, take a Quiz, see the Review, try again', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1, name: ivanBohun.title })).toBeFocused();
   expect(await page.evaluate(() => window.scrollY)).toBe(0);
   await expect(page.getByRole('radio', { checked: true })).toHaveCount(0);
-  await expect(finish).toBeDisabled();
+  await expect(finish).toHaveAttribute('aria-disabled', 'true');
 });

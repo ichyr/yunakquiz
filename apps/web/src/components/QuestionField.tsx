@@ -43,9 +43,9 @@ export function QuestionField({
           {question.options.map((option) => (
             <label
               key={option.id}
-              className="flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors hover:bg-accent/50 has-data-[state=checked]:border-primary has-data-[state=checked]:bg-accent"
+              className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-accent/50 has-data-[state=checked]:border-primary has-data-[state=checked]:bg-accent"
             >
-              <RadioGroupItem value={String(option.id)} className="mt-0.5" />
+              <RadioGroupItem value={String(option.id)} />
               <span lang={language} className="text-sm leading-snug">
                 {option.text}
               </span>

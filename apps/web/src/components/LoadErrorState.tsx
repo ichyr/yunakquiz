@@ -1,3 +1,4 @@
+import { DocumentTitle } from './DocumentTitle.tsx';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { PageMessage } from './PageMessage.tsx';
@@ -6,15 +7,18 @@ import { PageMessage } from './PageMessage.tsx';
 export function LoadErrorState({ onRetry }: { onRetry: () => void }) {
   const { t } = useTranslation();
   return (
-    <PageMessage
-      role="alert"
-      title={t('status.errorTitle')}
-      description={t('status.errorDescription')}
-      action={
-        <Button variant="outline" onClick={onRetry}>
-          {t('status.retry')}
-        </Button>
-      }
-    />
+    <>
+      <DocumentTitle page={t('status.errorTitle')} />
+      <PageMessage
+        role="alert"
+        title={t('status.errorTitle')}
+        description={t('status.errorDescription')}
+        action={
+          <Button variant="outline" onClick={onRetry}>
+            {t('status.retry')}
+          </Button>
+        }
+      />
+    </>
   );
 }
