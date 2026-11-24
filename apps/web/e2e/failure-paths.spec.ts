@@ -65,3 +65,24 @@ test('a failed request offers a retry', async ({ page }) => {
     page.getByRole('link').filter({ hasText: ivanBohun.categories[0]!.name }),
   ).toBeVisible();
 });
+
+test('a screen that fails to load offers a reload', async ({ page }) => {
+  await page.goto('/');
+  const searchbox = page.getByRole('searchbox', { name: uk.search.label });
+  await searchbox.fill('Богун');
+  await page.keyboard.press('Enter');
+  const quizLink = page.getByRole('link', { name: new RegExp(ivanBohun.title) });
+  await expect(quizLink).toBeVisible();
+
+  // The Quiz screen's code is fetched on demand; make that fetch fail.
+  await page.route('**/QuizPage*', (route) => route.abort());
+  await quizLink.click();
+
+  const retry = page.getByRole('button', { name: uk.status.retry });
+  await expect(retry).toBeVisible();
+
+  await page.unroute('**/QuizPage*');
+  await retry.click();
+
+  await expect(page.getByRole('radiogroup')).toHaveCount(ivanBohun.questions.length);
+});
