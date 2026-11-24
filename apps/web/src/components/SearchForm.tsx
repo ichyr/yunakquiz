@@ -14,14 +14,18 @@ interface SearchFormProps {
 export function SearchForm({ addressQuery = '', onSearch }: SearchFormProps) {
   const { t } = useTranslation();
   const [query, setQuery] = useState(addressQuery);
-  const [seenAddressQuery, setSeenAddressQuery] = useState(addressQuery);
-  if (seenAddressQuery !== addressQuery) {
-    setSeenAddressQuery(addressQuery);
+  // The query the text last matched: the address, or what was just submitted. Submitting
+  // records it before the address renders, so Back to the old address still differs and
+  // resets the text even if React never rendered the in-between address.
+  const [syncedQuery, setSyncedQuery] = useState(addressQuery);
+  if (syncedQuery !== addressQuery) {
+    setSyncedQuery(addressQuery);
     setQuery(addressQuery);
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setSyncedQuery(query.trim());
     onSearch(query.trim());
   }
 
