@@ -15,13 +15,16 @@ export function SearchPage() {
   const results = useQuizSearch(query);
   const search = useSearchNavigation();
 
+  const resultsText = results.data?.length ? t('search.resultsFor', { query }) : '';
+
   return (
     <div className="flex flex-col gap-6">
       <section className="flex flex-col gap-3">
         <PageTitle>{t('search.title')}</PageTitle>
-        {/* Keyed so Back/Forward refills the box with that address's query. */}
-        <SearchForm key={query} defaultQuery={query} onSearch={search} />
+        <SearchForm addressQuery={query} onSearch={search} />
       </section>
+
+      <output className="sr-only">{resultsText}</output>
 
       {query === '' ? (
         <PageMessage title={t('search.blank')} />

@@ -5,14 +5,20 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
 interface SearchFormProps {
-  defaultQuery?: string;
+  /** The query in the address. When it changes, the text resets to it. */
+  addressQuery?: string;
   onSearch: (query: string) => void;
 }
 
 /** Searches on submit (Enter or the button), not while typing. */
-export function SearchForm({ defaultQuery = '', onSearch }: SearchFormProps) {
+export function SearchForm({ addressQuery = '', onSearch }: SearchFormProps) {
   const { t } = useTranslation();
-  const [query, setQuery] = useState(defaultQuery);
+  const [query, setQuery] = useState(addressQuery);
+  const [seenAddressQuery, setSeenAddressQuery] = useState(addressQuery);
+  if (seenAddressQuery !== addressQuery) {
+    setSeenAddressQuery(addressQuery);
+    setQuery(addressQuery);
+  }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
