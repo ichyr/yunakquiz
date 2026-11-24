@@ -4,6 +4,10 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@utility focus-ring {
+  @apply outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50;
+}
+
 /* Design tokens. Shown in Storybook under Design / Tokens; keep src/design/tokens.ts in sync. */
 :root {
   --radius: 0.625rem;
@@ -12,8 +16,6 @@
   --foreground: oklch(0.24 0.02 150);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.24 0.02 150);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.24 0.02 150);
   --primary: oklch(0.47 0.1 148);
   --primary-foreground: oklch(0.985 0.01 95);
   --secondary: oklch(0.94 0.04 95);
@@ -45,8 +47,6 @@
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);

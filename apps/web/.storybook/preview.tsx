@@ -1,5 +1,5 @@
 import type { Preview } from '@storybook/react-vite';
-import { MemoryRouter } from 'react-router';
+import { createMemoryRouter, RouterProvider } from 'react-router';
 import i18n from '../src/i18n/index.ts';
 import '../src/index.css';
 
@@ -22,11 +22,7 @@ const preview: Preview = {
     (Story, context) => {
       const locale = context.globals['locale'] as string;
       if (i18n.language !== locale) void i18n.changeLanguage(locale);
-      return (
-        <MemoryRouter>
-          <Story />
-        </MemoryRouter>
-      );
+      return <RouterProvider router={createMemoryRouter([{ path: '*', element: <Story /> }])} />;
     },
   ],
   parameters: {

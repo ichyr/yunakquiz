@@ -1,7 +1,7 @@
 # React coding standards
 
 - Start independent requests in parallel; never await them one after another. ([async-parallel](../../.agents/skills/vercel-react-best-practices/rules/async-parallel.md))
-- Import from the module itself, not through a barrel file. ([bundle-barrel-imports](../../.agents/skills/vercel-react-best-practices/rules/bundle-barrel-imports.md))
+- Import from the module itself, not through a barrel file. `lucide-react`, `radix-ui` and `@yunakquiz/core` are exempt: the production build tree-shakes them. ([bundle-barrel-imports](../../.agents/skills/vercel-react-best-practices/rules/bundle-barrel-imports.md))
 - Load route pages lazily with React Router's `lazy` route property.
 - Compute derived state while rendering; never sync it with an effect. ([rerender-derived-state-no-effect](../../.agents/skills/vercel-react-best-practices/rules/rerender-derived-state-no-effect.md))
 - Never define a component inside another component. ([rerender-no-inline-components](../../.agents/skills/vercel-react-best-practices/rules/rerender-no-inline-components.md))

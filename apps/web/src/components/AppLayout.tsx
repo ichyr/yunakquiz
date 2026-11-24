@@ -10,10 +10,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
     <div className="flex min-h-dvh flex-col">
       <header className="border-b bg-card">
         <div className="mx-auto flex w-full max-w-2xl items-center justify-between gap-4 px-4 py-3">
-          <Link
-            to="/"
-            className="flex flex-col rounded-sm outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
-          >
+          <Link to="/" className="focus-ring flex flex-col rounded-sm">
             <span className="text-lg font-bold text-primary">{t('app.name')}</span>
             <span className="hidden text-xs text-muted-foreground sm:block">
               {t('app.tagline')}

@@ -5,7 +5,6 @@ import { en } from './locales/en.ts';
 import { uk } from './locales/uk.ts';
 
 export const interfaceLanguages = ['uk', 'en'] as const;
-export type InterfaceLanguage = (typeof interfaceLanguages)[number];
 
 export const resources = {
   uk: { translation: uk },

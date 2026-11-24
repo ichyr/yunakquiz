@@ -29,7 +29,7 @@ export function LeaveAttemptDialog({ open, onStay, onLeave }: LeaveAttemptDialog
         <AlertDialogFooter>
           <AlertDialogCancel>{t('leave.stay')}</AlertDialogCancel>
           <AlertDialogAction
-            className="bg-destructive text-white hover:bg-destructive/90"
+            variant="destructive"
             onClick={(event) => {
               // Closing would also call onStay, cancelling the leave. Leaving unmounts the dialog.
               event.preventDefault();

@@ -16,11 +16,13 @@ export function SearchPage() {
   const results = useQuizSearch(query);
   const search = useSearchNavigation();
 
+  const showsPage = query === '' || results.data !== undefined;
   const resultsText = results.data?.length ? t('search.resultsFor', { query }) : '';
 
   return (
     <div className="flex flex-col gap-6">
-      <DocumentTitle page={query || t('search.title')} />
+      {/* While loading, offline or failed, QueryFallback's own title is the only one. */}
+      {showsPage && <DocumentTitle page={query || t('search.title')} />}
       <section className="flex flex-col gap-3">
         <PageTitle>{t('search.title')}</PageTitle>
         <SearchForm addressQuery={query} onSearch={search} />

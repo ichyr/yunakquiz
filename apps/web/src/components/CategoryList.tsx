@@ -9,7 +9,7 @@ export function CategoryList({ categories }: { categories: Category[] }) {
         <li key={category.slug}>
           <Link
             to={`/categories/${category.slug}`}
-            className="flex items-center justify-between gap-2 rounded-lg border bg-card px-4 py-3 font-medium shadow-xs transition-colors outline-none hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            className="flex items-center justify-between gap-2 rounded-lg border bg-card px-4 py-3 font-medium shadow-xs transition-colors focus-ring hover:bg-accent"
           >
             {category.name}
             <ChevronRightIcon aria-hidden className="size-4 text-muted-foreground" />

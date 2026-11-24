@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { finishAttempt, isPerfect, startAttempt } from './index.ts';
+import { finishAttempt, isPerfect, optionOutcome, startAttempt } from './index.ts';
 import { choose, quiz, seeded } from './sample.test-helpers.ts';
 
 describe('the Review', () => {
@@ -46,5 +46,22 @@ describe('the Review', () => {
 
     expect(isPerfect(allCorrect.review.score)).toBe(true);
     expect(isPerfect(someIncorrect().review.score)).toBe(false);
+  });
+
+  it('marks the Correct Option correct, a wrongly chosen Option wrong and the rest other', () => {
+    const q2 = someIncorrect().review.items.find((item) => item.prompt === 'Q2')!;
+    const [other] = q2.options.filter(
+      (option) => option.id !== q2.chosenOptionId && option.id !== q2.correctOptionId,
+    );
+
+    expect(optionOutcome(q2, q2.correctOptionId)).toBe('correct');
+    expect(optionOutcome(q2, q2.chosenOptionId)).toBe('wrong');
+    expect(optionOutcome(q2, other!.id)).toBe('other');
+  });
+
+  it('marks the chosen Option correct when it is the Correct Option', () => {
+    const q1 = someIncorrect().review.items.find((item) => item.prompt === 'Q1')!;
+
+    expect(optionOutcome(q1, q1.chosenOptionId)).toBe('correct');
   });
 });
