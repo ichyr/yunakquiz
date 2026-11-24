@@ -11,4 +11,7 @@ Before writing or reviewing code here, read [CODING_STANDARDS.md](CODING_STANDAR
 
 ## Testing
 
-One Playwright end-to-end test covers the main path: search, take a Quiz, see the Review. Run it with `pnpm test:e2e`.
+Two Playwright specs in `e2e/`, run with `pnpm test:e2e`:
+
+- `main-path.spec.ts`: search, take a Quiz, see the Review.
+- `failure-paths.spec.ts`: offline and recovery, an Attempt carrying on offline, a broken link, and a failed request with Retry. Before going offline, a test opens every screen it will use offline (Search, for example), so its code is already loaded.

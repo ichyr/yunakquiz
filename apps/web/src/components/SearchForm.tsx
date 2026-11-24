@@ -5,17 +5,27 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
 interface SearchFormProps {
-  defaultQuery?: string;
+  /** The query in the address. When it changes, the text resets to it. */
+  addressQuery?: string;
   onSearch: (query: string) => void;
 }
 
 /** Searches on submit (Enter or the button), not while typing. */
-export function SearchForm({ defaultQuery = '', onSearch }: SearchFormProps) {
+export function SearchForm({ addressQuery = '', onSearch }: SearchFormProps) {
   const { t } = useTranslation();
-  const [query, setQuery] = useState(defaultQuery);
+  const [query, setQuery] = useState(addressQuery);
+  // The query the text last matched: the address, or what was just submitted. Submitting
+  // records it before the address renders, so Back to the old address still differs and
+  // resets the text even if React never rendered the in-between address.
+  const [syncedQuery, setSyncedQuery] = useState(addressQuery);
+  if (syncedQuery !== addressQuery) {
+    setSyncedQuery(addressQuery);
+    setQuery(addressQuery);
+  }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setSyncedQuery(query.trim());
     onSearch(query.trim());
   }
 

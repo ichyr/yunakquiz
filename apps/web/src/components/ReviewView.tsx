@@ -1,5 +1,6 @@
 import { isPerfect, type ReviewedAttempt } from '@yunakquiz/core';
 import { RotateCcwIcon } from 'lucide-react';
+import type { Ref } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { QuizHeader } from './QuizHeader.tsx';
@@ -8,9 +9,10 @@ import { ReviewItemCard } from './ReviewItemCard.tsx';
 interface ReviewViewProps {
   attempt: ReviewedAttempt;
   onTryAgain: () => void;
+  scoreRef?: Ref<HTMLHeadingElement> | undefined;
 }
 
-export function ReviewView({ attempt, onTryAgain }: ReviewViewProps) {
+export function ReviewView({ attempt, onTryAgain, scoreRef }: ReviewViewProps) {
   const { t } = useTranslation();
   const { quiz, review } = attempt;
   const { correct, total } = review.score;
@@ -30,7 +32,12 @@ export function ReviewView({ attempt, onTryAgain }: ReviewViewProps) {
         aria-labelledby="review-title"
         className="flex flex-col items-center gap-3 rounded-xl border bg-card px-6 py-6 text-center shadow-sm"
       >
-        <h2 id="review-title" className="text-sm font-medium text-muted-foreground">
+        <h2
+          id="review-title"
+          ref={scoreRef}
+          tabIndex={-1}
+          className="text-sm font-medium text-muted-foreground focus:outline-none"
+        >
           {t('review.title')} · {t('review.score')}
         </h2>
         <p className="text-5xl font-bold tabular-nums">

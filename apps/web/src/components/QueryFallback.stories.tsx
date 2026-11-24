@@ -5,8 +5,8 @@ import { ApiError } from '@/api/client';
 import { QueryFallback } from './QueryFallback.tsx';
 
 // Only the fields QueryFallback reads, so stories need no QueryClient or API.
-const queryWith = (state: { isError: boolean; error?: unknown }) =>
-  ({ ...state, refetch: fn() }) as unknown as UseQueryResult;
+const queryWith = (state: { isError: boolean; isPaused?: boolean; error?: unknown }) =>
+  ({ isPaused: false, ...state, refetch: fn() }) as unknown as UseQueryResult;
 
 const meta = {
   title: 'Status/QueryFallback',
@@ -18,6 +18,11 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Loading: Story = {};
+
+/** Offline: the query waits for the network, so there is nothing to retry. */
+export const Offline: Story = {
+  args: { query: queryWith({ isError: false, isPaused: true }) },
+};
 
 export const NotFound: Story = {
   args: {

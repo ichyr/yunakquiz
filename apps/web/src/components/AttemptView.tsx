@@ -1,4 +1,5 @@
 import { answeredCount, canFinish, type AnsweringAttempt } from '@yunakquiz/core';
+import type { Ref } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { QuestionField } from './QuestionField.tsx';
@@ -8,10 +9,11 @@ interface AttemptViewProps {
   attempt: AnsweringAttempt;
   onChoose: (questionId: number, optionId: number) => void;
   onFinish: () => void;
+  titleRef?: Ref<HTMLHeadingElement> | undefined;
 }
 
 /** All Questions on one page, no feedback until Finish. */
-export function AttemptView({ attempt, onChoose, onFinish }: AttemptViewProps) {
+export function AttemptView({ attempt, onChoose, onFinish, titleRef }: AttemptViewProps) {
   const { t } = useTranslation();
   const { quiz, questions } = attempt;
   const total = questions.length;
@@ -19,7 +21,7 @@ export function AttemptView({ attempt, onChoose, onFinish }: AttemptViewProps) {
 
   return (
     <div className="flex flex-col gap-6">
-      <QuizHeader quiz={quiz} />
+      <QuizHeader quiz={quiz} titleRef={titleRef} />
 
       <ol className="flex flex-col gap-4">
         {questions.map((question, index) => (

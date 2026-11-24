@@ -12,4 +12,4 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Empty: Story = {};
-export const Prefilled: Story = { args: { defaultQuery: 'Богун' } };
+export const Prefilled: Story = { args: { addressQuery: 'Богун' } };

@@ -1,4 +1,5 @@
 import type { Quiz } from '@yunakquiz/core';
+import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router';
 import { useQuiz } from '@/api/queries';
@@ -23,24 +24,42 @@ export function QuizPage() {
 function QuizAttempt({ quiz }: { quiz: Quiz }) {
   const { attempt, inProgress, choose, finish, tryAgain } = useAttempt(quiz);
   const blocker = useLeaveGuard(inProgress);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const scoreRef = useRef<HTMLHeadingElement>(null);
+  // Set by Finish and Try again only, so the first load never moves focus.
+  const focusAfterPhaseChange = useRef(false);
+
+  useEffect(() => {
+    if (!focusAfterPhaseChange.current) return;
+    focusAfterPhaseChange.current = false;
+    const target = attempt.phase === 'reviewed' ? scoreRef.current : titleRef.current;
+    target?.focus({ preventScroll: true });
+  }, [attempt.phase]);
+
+  const moveToTop = () => {
+    focusAfterPhaseChange.current = true;
+    window.scrollTo({ top: 0 });
+  };
 
   return (
     <>
       {attempt.phase === 'reviewed' ? (
         <ReviewView
           attempt={attempt}
+          scoreRef={scoreRef}
           onTryAgain={() => {
             tryAgain();
-            window.scrollTo({ top: 0 });
+            moveToTop();
           }}
         />
       ) : (
         <AttemptView
           attempt={attempt}
+          titleRef={titleRef}
           onChoose={choose}
           onFinish={() => {
             finish();
-            window.scrollTo({ top: 0 });
+            moveToTop();
           }}
         />
       )}

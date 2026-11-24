@@ -6,6 +6,9 @@ export function createQueryClient() {
     defaultOptions: {
       queries: {
         staleTime: 5 * 60_000,
+        // The default `online` network mode: offline, a query pauses instead of failing, and
+        // resumes on reconnect. QueryFallback shows OfflineState while it is paused.
+        networkMode: 'online',
         // A 404 won't fix itself; anything else gets the usual retries.
         retry: (failureCount, error) => !isNotFound(error) && failureCount < 3,
       },
