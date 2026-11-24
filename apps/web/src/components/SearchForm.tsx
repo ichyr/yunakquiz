@@ -39,9 +39,8 @@ export function SearchForm({ addressQuery = '', onSearch }: SearchFormProps) {
           onChange={(event) => setQuery(event.target.value)}
           placeholder={t('search.placeholder')}
           aria-label={t('search.label')}
-          className="h-10"
         />
-        <Button type="submit" size="lg">
+        <Button type="submit">
           <SearchIcon aria-hidden />
           <span className="sr-only sm:not-sr-only">{t('search.submit')}</span>
         </Button>
