@@ -6,7 +6,10 @@ const meta = {
   component: Badge,
   args: { children: 'Badge' },
   argTypes: {
-    variant: { control: 'select', options: ['default', 'secondary', 'destructive', 'outline'] },
+    variant: {
+      control: 'select',
+      options: ['default', 'secondary', 'destructive', 'success', 'outline'],
+    },
   },
 } satisfies Meta<typeof Badge>;
 
@@ -16,4 +19,5 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {};
 export const Secondary: Story = { args: { variant: 'secondary' } };
 export const Destructive: Story = { args: { variant: 'destructive' } };
+export const Success: Story = { args: { variant: 'success' } };
 export const Outline: Story = { args: { variant: 'outline' } };
