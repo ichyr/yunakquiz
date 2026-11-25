@@ -8,7 +8,7 @@ const slugParams = z.object({ slug: z.string() });
 const searchQuery = z.object({ q: z.string().trim().min(1) });
 
 export function buildApp({ db, logger = false }: { db: Db; logger?: boolean }) {
-  const app = Fastify({ logger });
+  const app = Fastify({ logger, requestTimeout: 30_000 });
 
   // Log server errors in full, but never send their details (e.g. SQL) to the client.
   app.setErrorHandler<FastifyError>((error, request, reply) => {
@@ -19,6 +19,8 @@ export function buildApp({ db, logger = false }: { db: Db; logger?: boolean }) {
     }
     return reply.code(status).send({ error: error.message });
   });
+
+  app.setNotFoundHandler((_request, reply) => reply.code(404).send({ error: 'Not found' }));
 
   app.register(
     async (api) => {
@@ -35,8 +37,9 @@ export function buildApp({ db, logger = false }: { db: Db; logger?: boolean }) {
       api.get('/categories', () => listCategories(db));
 
       api.get('/categories/:slug', async (request, reply) => {
-        const { slug } = slugParams.parse(request.params);
-        const category = await findCategory(db, slug);
+        const params = slugParams.safeParse(request.params);
+        if (!params.success) return reply.code(400).send({ error: 'Invalid slug' });
+        const category = await findCategory(db, params.data.slug);
         return category ?? reply.code(404).send({ error: 'Category not found' });
       });
 
@@ -47,8 +50,9 @@ export function buildApp({ db, logger = false }: { db: Db; logger?: boolean }) {
       });
 
       api.get('/quizzes/:slug', async (request, reply) => {
-        const { slug } = slugParams.parse(request.params);
-        const quiz = await findQuiz(db, slug);
+        const params = slugParams.safeParse(request.params);
+        if (!params.success) return reply.code(400).send({ error: 'Invalid slug' });
+        const quiz = await findQuiz(db, params.data.slug);
         return quiz ?? reply.code(404).send({ error: 'Quiz not found' });
       });
     },

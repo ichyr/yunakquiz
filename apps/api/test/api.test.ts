@@ -31,6 +31,12 @@ describe('GET /api/health', () => {
   });
 });
 
+describe('unknown routes', () => {
+  it('answer 404 in the API error shape', async () => {
+    expect(await get('/api/nope')).toEqual({ status: 404, body: { error: 'Not found' } });
+  });
+});
+
 describe('GET /api/categories', () => {
   it('lists only Categories that contain a Quiz, by name', async () => {
     await db.insert(categories).values({ slug: 'empty', name: 'Порожня' });
