@@ -2,9 +2,10 @@ import cookie from '@fastify/cookie';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
-import Fastify, { type FastifyError } from 'fastify';
+import Fastify, { type FastifyError, type FastifyServerOptions } from 'fastify';
 import { sql } from 'drizzle-orm';
 import { z } from 'zod';
+import { adminRoutes } from './admin.ts';
 import { authRoutes, defaultAuthLimits, type AuthLimits } from './auth.ts';
 import type { Db } from './db/client.ts';
 import { createPasswordHasher, parsePeppers } from './passwords.ts';
@@ -14,6 +15,7 @@ import {
   quizResponse,
   quizSummariesResponse,
 } from './response-schemas.ts';
+import type { RegistrationMode } from './registration-mode.ts';
 import { createFakeMailer, type Mailer } from './mailer.ts';
 import { findCategory, findQuiz, listCategories, searchQuizzes } from './quizzes.ts';
 
@@ -42,13 +44,14 @@ export function buildApp({
   corsOrigins = [],
   secureCookies = true,
   now = () => new Date(),
+  registrationMode = 'open',
 }: {
   db: Db;
   /** PASSWORD_PEPPERS: `version:secret,...`, first is current. Throws when missing or malformed. */
   passwordPeppers: string | undefined;
   /** Defaults to an in-memory fake, so an app built without one never sends real mail. */
   mailer?: Mailer;
-  logger?: boolean;
+  logger?: FastifyServerOptions['logger'];
   /** Read the client address from X-Forwarded-For. Enable only behind a load balancer. */
   trustProxy?: boolean | number;
   rateLimit?: RateLimitOptions;
@@ -61,6 +64,8 @@ export function buildApp({
   secureCookies?: boolean;
   /** The clock, so tests can move time. */
   now?: () => Date;
+  /** REGISTRATION_MODE. `closed`: self-registration answers 403; only Admins make Accounts. */
+  registrationMode?: RegistrationMode;
 }) {
   const hasher = createPasswordHasher(parsePeppers(passwordPeppers));
   const app = Fastify({
@@ -115,6 +120,16 @@ export function buildApp({
           return reply.code(403).send({ error: 'csrf_header_required' });
         }
       });
+
+      if (registrationMode === 'closed') {
+        api.addHook('onRequest', async (request, reply) => {
+          if (request.method === 'POST' && request.routeOptions.url === '/api/register') {
+            return reply.code(403).send({ error: 'registration_closed' });
+          }
+        });
+      }
+
+      api.register(adminRoutes, { prefix: '/admin', db, now });
 
       api.register(authRoutes, {
         db,

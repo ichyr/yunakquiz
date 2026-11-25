@@ -4,6 +4,7 @@ import { buildApp } from './app.ts';
 import { createDb } from './db/client.ts';
 import { createSesMailer } from './mailer.ts';
 import { parsePeppers } from './passwords.ts';
+import { parseRegistrationMode } from './registration-mode.ts';
 import { isLocalEnvironment, optionalEnv, requireEnv } from './env.ts';
 
 // Fail before anything else starts: no pepper, no API (ADR 0008).
@@ -34,6 +35,7 @@ const app = buildApp({
     .filter(Boolean),
   secureCookies: !isLocalEnvironment(),
   trustProxy: trustProxyHops > 0 ? trustProxyHops : false,
+  registrationMode: parseRegistrationMode(process.env.REGISTRATION_MODE),
 });
 
 // On SIGINT/SIGTERM (or a fatal error): stop accepting connections, drain in-flight

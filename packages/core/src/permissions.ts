@@ -11,7 +11,8 @@ export type Role = z.infer<typeof roleSchema>;
 export type Actor = { id: number; role: Role; verified: boolean };
 export type AccountTarget = { id: number; role: Role };
 
-const isAdmin = (actor: Actor | null): actor is Actor =>
+/** A verified Admin: the only kind of actor with admin powers. */
+export const isAdmin = (actor: Actor | null): boolean =>
   actor !== null && actor.role === 'admin' && actor.verified;
 
 export function canListUsers(actor: Actor | null): boolean {
