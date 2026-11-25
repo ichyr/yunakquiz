@@ -40,7 +40,7 @@ export function buildApp({
   authLimits = {},
   webBaseUrl = 'http://localhost:5173',
   corsOrigins = [],
-  secureCookies = false,
+  secureCookies = true,
   now = () => new Date(),
 }: {
   db: Db;
@@ -57,7 +57,7 @@ export function buildApp({
   webBaseUrl?: string;
   /** Origins allowed to call the API from a browser with credentials. Empty: same origin only. */
   corsOrigins?: string[];
-  /** Set the Secure flag on the session cookie. True in production. */
+  /** Set the Secure flag on the session cookie. On by default; only local development and tests turn it off. */
   secureCookies?: boolean;
   /** The clock, so tests can move time. */
   now?: () => Date;

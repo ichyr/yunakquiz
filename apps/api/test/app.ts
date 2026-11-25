@@ -29,6 +29,7 @@ export function buildAuthApp(
     webBaseUrl: 'https://quiz.test',
     corsOrigins: ['https://quiz.test'],
     now: () => new Date(time),
+    secureCookies: false,
     ...options,
   });
   return {

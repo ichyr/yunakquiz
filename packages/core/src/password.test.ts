@@ -27,6 +27,13 @@ describe('validatePassword', () => {
       expect(issues(padded(129))).toEqual(['too_long']);
     });
 
+    it('answers too_long alone, and fast, for a huge password', () => {
+      const started = performance.now();
+      expect(issues('a'.repeat(1024 * 1024))).toEqual(['too_long']);
+      expect(issues('ab'.repeat(500_000) + 'c')).toEqual(['too_long']);
+      expect(performance.now() - started).toBeLessThan(500);
+    });
+
     it('counts characters, not UTF-16 units', () => {
       expect(issues('🏕🔥🌲⛺🧭🎒🪢🔦🌄🥾🏞🦌🐻🌙🪵')).toEqual([]);
       expect(issues('🏕🔥🌲⛺🧭🎒🪢🔦🌄🥾🏞🦌🐻🌙')).toEqual(['too_short']);

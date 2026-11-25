@@ -1,5 +1,8 @@
 import { z } from 'zod';
 
+/** Far above the password rules' limit: only bounds the work a request can cause. */
+export const PASSWORD_INPUT_MAX_LENGTH = 1024;
+
 export const interfaceLanguageSchema = z.enum(['uk', 'en']);
 
 export const DISPLAY_NAME_MIN_LENGTH = 2;
@@ -16,14 +19,14 @@ const displayName = z.string().trim().min(DISPLAY_NAME_MIN_LENGTH).max(DISPLAY_N
 export const registerInputSchema = z.object({
   email,
   displayName,
-  password: z.string().min(1),
+  password: z.string().min(1).max(PASSWORD_INPUT_MAX_LENGTH),
   interfaceLanguage: interfaceLanguageSchema,
 });
 
 /** Login applies no password rules: an old password must keep working if the rules change. */
 export const loginInputSchema = z.object({
   email,
-  password: z.string().min(1),
+  password: z.string().min(1).max(PASSWORD_INPUT_MAX_LENGTH),
 });
 
 export const tokenInputSchema = z.object({ token: z.string().min(1).max(200) });

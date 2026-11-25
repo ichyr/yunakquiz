@@ -4,7 +4,7 @@ import { buildApp } from './app.ts';
 import { createDb } from './db/client.ts';
 import { createSesMailer } from './mailer.ts';
 import { parsePeppers } from './passwords.ts';
-import { optionalEnv, requireEnv } from './env.ts';
+import { isLocalEnvironment, optionalEnv, requireEnv } from './env.ts';
 
 // Fail before anything else starts: no pepper, no API (ADR 0008).
 const passwordPeppers = requireEnv('PASSWORD_PEPPERS');
@@ -32,7 +32,7 @@ const app = buildApp({
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean),
-  secureCookies: process.env.NODE_ENV === 'production',
+  secureCookies: !isLocalEnvironment(),
   trustProxy: trustProxyHops > 0 ? trustProxyHops : false,
 });
 

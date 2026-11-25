@@ -2,7 +2,8 @@ import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { oneTimeTokens, sessions, users } from '../src/db/schema.ts';
-import { parsePeppers } from '../src/passwords.ts';
+import { createPasswordHasher, parsePeppers } from '../src/passwords.ts';
+import { createUser } from '../src/users.ts';
 import { seedTestAccount } from '../seed/test-account.ts';
 import {
   buildApp,
@@ -142,6 +143,29 @@ describe('POST /api/register', () => {
     expect(response.json()).toEqual({ error: 'display_name_taken' });
   });
 
+  it('answers a taken display name with 409 for a known and an unknown email', async () => {
+    const ctx = start();
+    const owner = registration({ displayName: 'Богун' });
+    await post(ctx, '/api/register', owner);
+
+    const known = await post(ctx, '/api/register', { ...owner, password: strongPassword });
+    const unknown = await post(ctx, '/api/register', registration({ displayName: 'Богун' }));
+
+    expect(known.statusCode).toBe(409);
+    expect(unknown.statusCode).toBe(409);
+    expect(known.json()).toEqual(unknown.json());
+  });
+
+  it('rejects a password over 1024 characters at the schema, for register and login', async () => {
+    const ctx = start();
+    const huge = 'a'.repeat(1025);
+    const register = await post(ctx, '/api/register', registration({ password: huge }));
+    const logIn = await login(ctx, uniqueEmail(), huge);
+    expect(register.statusCode).toBe(400);
+    expect(register.json()).toEqual({ error: 'invalid_input' });
+    expect(logIn.statusCode).toBe(400);
+  });
+
   it('rejects a weak password with the reason codes', async () => {
     const ctx = start();
     const email = uniqueEmail();
@@ -238,6 +262,21 @@ describe('POST /api/login', () => {
     const [row] = await db.select().from(sessions);
     expect(row!.id).not.toBe(value);
     expect(row!.id).toBe(createHash('sha256').update(value).digest('base64url'));
+  });
+
+  it('marks the cookie Secure unless the app opts out', async () => {
+    const app = buildApp({ db });
+    apps.push(app);
+    const email = uniqueEmail();
+    await createUser(db, createPasswordHasher(parsePeppers(testPeppers)), {
+      email,
+      displayName: 'Secure default',
+      password: strongPassword,
+      interfaceLanguage: 'uk',
+      verifiedAt: new Date(),
+    });
+    const response = await login({ app } as Ctx, email, strongPassword);
+    expect(String(response.headers['set-cookie'])).toContain('Secure');
   });
 
   it('marks the cookie Secure in production', async () => {
@@ -582,23 +621,27 @@ describe('test-only Account seed', () => {
     expect(response.json()).toMatchObject({ verified: true, role: 'user' });
   });
 
-  it('refuses to run in production', async () => {
-    const before = process.env.NODE_ENV;
-    process.env.NODE_ENV = 'production';
-    try {
-      await expect(
-        seedTestAccount(db, {
-          peppers: testPeppers,
-          email: uniqueEmail(),
-          displayName: 'Nope',
-          password: 'a known password for e2e runs',
-        }),
-      ).rejects.toThrow(/production/);
-    } finally {
-      if (before === undefined) delete process.env.NODE_ENV;
-      else process.env.NODE_ENV = before;
-    }
-  });
+  it.each(['production', undefined, '', 'staging'])(
+    'refuses to run when NODE_ENV is %j',
+    async (value) => {
+      const before = process.env.NODE_ENV;
+      if (value === undefined) delete process.env.NODE_ENV;
+      else process.env.NODE_ENV = value;
+      try {
+        await expect(
+          seedTestAccount(db, {
+            peppers: testPeppers,
+            email: uniqueEmail(),
+            displayName: 'Nope',
+            password: 'a known password for e2e runs',
+          }),
+        ).rejects.toThrow(/development or test/);
+      } finally {
+        if (before === undefined) delete process.env.NODE_ENV;
+        else process.env.NODE_ENV = before;
+      }
+    },
+  );
 });
 
 async function waitUntil(assertion: () => void, timeoutMs = 5_000) {

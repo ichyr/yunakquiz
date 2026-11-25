@@ -126,11 +126,12 @@ export async function authRoutes(api: FastifyInstance, deps: AuthDeps) {
       return accepted();
     };
 
-    const existing = await findUserByEmail(db, input.email);
-    if (existing) return alreadyRegistered(existing.interfaceLanguage);
+    // Display name first: 409 whether or not the email is known, so it cannot probe for Accounts.
     if (await findUserByDisplayName(db, input.displayName)) {
       return reply.code(409).send({ error: 'display_name_taken' });
     }
+    const existing = await findUserByEmail(db, input.email);
+    if (existing) return alreadyRegistered(existing.interfaceLanguage);
 
     const created = await createUser(db, hasher, input);
     if (!created.ok) {

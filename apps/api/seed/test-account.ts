@@ -1,4 +1,5 @@
 import type { Db } from '../src/db/client.ts';
+import { isLocalEnvironment } from '../src/env.ts';
 import { createPasswordHasher, parsePeppers } from '../src/passwords.ts';
 import { createUser } from '../src/users.ts';
 
@@ -17,8 +18,8 @@ export async function seedTestAccount(
     role?: 'user' | 'admin';
   },
 ) {
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error('The test Account seed must not run in production');
+  if (!isLocalEnvironment()) {
+    throw new Error('The test Account seed runs only when NODE_ENV is development or test');
   }
   const hasher = createPasswordHasher(parsePeppers(input.peppers));
   const result = await createUser(db, hasher, {

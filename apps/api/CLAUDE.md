@@ -25,6 +25,6 @@ Vitest with `app.inject()` against the real Postgres database from Docker Compos
 
 - Design: ADR 0008 and 0010, hashing in [docs/password-hashing.md](../../docs/password-hashing.md). Code: `src/auth.ts` (routes, sessions), `src/passwords.ts` (argon2id and pepper), `src/users.ts` (`createUser`, the one way an Account is made).
 - `buildApp` needs `passwordPeppers` (`PASSWORD_PEPPERS=v2:<secret>,v1:<secret>`, secrets at least 16 characters) and throws without it. The dev pepper is in `.env.development`; production sets its own.
-- Mutating routes need the `X-Requested-With` header (any value). Other env: `WEB_BASE_URL` (mailed links), `CORS_ORIGINS` (comma-separated allowlist, unset means same origin), `NODE_ENV=production` (Secure cookie).
+- Mutating routes need the `X-Requested-With` header (any value). Other env: `WEB_BASE_URL` (mailed links), `CORS_ORIGINS` (comma-separated allowlist, unset means same origin), `NODE_ENV` (the Secure cookie and the test Account seed treat anything but an explicit `development` or `test` as production; `.env.development` sets `development`).
 - Tests build apps with `buildAuthApp` from `test/app.ts`: fake Mailer, movable clock (`advance`), a unique recipient from `uniqueEmail()`.
 - `pnpm db:seed:test-account --email … --name … --password …` creates a verified Account for e2e. It refuses to run in production.

@@ -42,13 +42,14 @@ export const validatePassword = (
   password: string,
   { email, name }: PasswordIdentity,
 ): PasswordResult => {
-  const text = normalise(password);
+  // Reject first: the later checks (the repeat regex above all) must never see a huge input.
   const length = [...password.normalize('NFKC')].length;
+  if (length > PASSWORD_MAX_LENGTH) return { ok: false, issues: ['too_long'] };
+  const text = normalise(password);
   const localPart = normalise(email.slice(0, email.lastIndexOf('@')));
   const issues: PasswordIssue[] = [];
 
   if (length < PASSWORD_MIN_LENGTH) issues.push('too_short');
-  if (length > PASSWORD_MAX_LENGTH) issues.push('too_long');
   if (commonPasswords.has(text)) issues.push('common');
   if (containsPart(text, localPart)) issues.push('contains_email');
   if (containsPart(text, normalise(name.trim()))) issues.push('contains_name');
