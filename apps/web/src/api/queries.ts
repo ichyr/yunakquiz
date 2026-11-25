@@ -1,5 +1,10 @@
 import { QueryClient, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  changeDisplayName,
+  changeEmail,
+  changePassword,
+  confirmEmailChange,
+  deleteAccount,
   fetchCategories,
   fetchCategory,
   fetchMe,
@@ -8,6 +13,8 @@ import {
   login,
   logout,
   register,
+  completePasswordReset,
+  requestPasswordReset,
   searchQuizzes,
   verifyEmail,
 } from './client.ts';
@@ -58,6 +65,14 @@ export function useRegister() {
   return useMutation({ mutationFn: register });
 }
 
+export function useRequestPasswordReset() {
+  return useMutation({ mutationFn: requestPasswordReset });
+}
+
+export function useCompletePasswordReset() {
+  return useMutation({ mutationFn: completePasswordReset });
+}
+
 export function useLogin() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -72,6 +87,48 @@ export function useLogout() {
     mutationFn: logout,
     // Settled either way: a failed logout must not leave the UI claiming a session it dropped.
     onSettled: () => queryClient.setQueryData(['me'], null),
+  });
+}
+
+export function useChangeDisplayName() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: changeDisplayName,
+    onSuccess: (account) => queryClient.setQueryData(['me'], account),
+  });
+}
+
+export function useChangePassword() {
+  return useMutation({ mutationFn: changePassword });
+}
+
+export function useChangeEmail() {
+  return useMutation({ mutationFn: changeEmail });
+}
+
+export function useDeleteAccount() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteAccount,
+    // The API ended the session with the Account.
+    onSuccess: () => queryClient.setQueryData(['me'], null),
+  });
+}
+
+/** Spends the mailed email-change token once; see useVerifyEmail for why it is a query. */
+export function useConfirmEmailChange(token: string) {
+  const queryClient = useQueryClient();
+  return useQuery({
+    queryKey: ['confirm-email', token],
+    queryFn: async () => {
+      await confirmEmailChange(token);
+      void queryClient.invalidateQueries({ queryKey: ['me'] });
+      return true;
+    },
+    enabled: token !== '',
+    retry: false,
+    staleTime: Infinity,
+    gcTime: Infinity,
   });
 }
 

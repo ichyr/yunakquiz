@@ -52,6 +52,22 @@ export const router = createBrowserRouter([
       },
       // Guarded: AdminGate loads the Admin chunk only for an Admin.
       { path: '/admin/users', element: <AdminGate /> },
+      {
+        path: '/account',
+        lazy: () => import('./routes/AccountPage.tsx').then((m) => ({ Component: m.AccountPage })),
+      },
+      {
+        path: '/confirm-email',
+        lazy: () =>
+          import('./routes/ConfirmEmailPage.tsx').then((m) => ({ Component: m.ConfirmEmailPage })),
+      },
+      {
+        path: '/reset-password',
+        lazy: () =>
+          import('./routes/ResetPasswordPage.tsx').then((m) => ({
+            Component: m.ResetPasswordPage,
+          })),
+      },
       { path: '*', element: <NotFoundPage /> },
     ],
   },

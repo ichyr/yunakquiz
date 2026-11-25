@@ -13,3 +13,4 @@ export * from './password.ts';
 export * from './account.ts';
 export * from './permissions.ts';
 export * from './admin.ts';
+export * from './password-reset.ts';

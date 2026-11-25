@@ -12,6 +12,7 @@
     "db:seed": "node --env-file=../../.env.development --env-file-if-exists=../../.env seed/run.ts",
     "db:seed:test-account": "node --env-file=../../.env.development --env-file-if-exists=../../.env seed/test-account-run.ts",
     "db:seed:admin": "node --env-file=../../.env.development --env-file-if-exists=../../.env seed/first-admin-run.ts",
+    "db:cleanup-unverified": "node --env-file=../../.env.development --env-file-if-exists=../../.env scripts/cleanup-unverified.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },

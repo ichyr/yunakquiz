@@ -4,24 +4,17 @@ import {
   roleChangeInputSchema,
   type Actor,
 } from '@yunakquiz/core';
-import { eq } from 'drizzle-orm';
-import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import type { FastifyInstance, FastifyReply } from 'fastify';
 import { z } from 'zod';
 import { changeRole, deleteUserAsAdmin, listUsers, toActor } from './admin-users.ts';
-import { SESSION_ABSOLUTE_MS, SESSION_INACTIVITY_MS } from './auth.ts';
 import type { Db } from './db/client.ts';
-import { sessions, users } from './db/schema.ts';
-import { hashToken } from './tokens.ts';
+import { createSessionReader } from './session.ts';
 
 /**
  * Admin routes, all under /api/admin. The hook below answers 403 to everyone who is not a
  * verified Admin before any handler runs, and the data functions check again under a lock.
  * Admin actions go to the structured log by `id` only: no emails, no secrets.
  */
-
-// Same cookie as auth.ts. The session lookup is repeated here (rather than exported from
-// auth.ts) to keep this ticket out of the file other tickets are changing.
-const SESSION_COOKIE = 'sid';
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -34,39 +27,19 @@ const idParams = z.object({ id: z.coerce.number().int().positive().max(2_147_483
 export type AdminDeps = {
   db: Db;
   now: () => Date;
+  secureCookies: boolean;
 };
 
 export async function adminRoutes(api: FastifyInstance, deps: AdminDeps) {
-  const { db, now } = deps;
+  const { db, now, secureCookies } = deps;
   api.decorateRequest('adminActor', undefined);
 
-  /** The Actor behind a live session, 'guest' for no cookie, 'expired' for a dead one. */
-  async function sessionActor(request: FastifyRequest, reply: FastifyReply) {
-    const token = request.cookies[SESSION_COOKIE];
-    if (!token) return 'guest' as const;
-    const id = hashToken(token);
-    const [row] = await db
-      .select({ session: sessions, user: users })
-      .from(sessions)
-      .innerJoin(users, eq(users.id, sessions.userId))
-      .where(eq(sessions.id, id));
-    const time = now().getTime();
-    const live =
-      row &&
-      time - row.session.lastSeenAt.getTime() < SESSION_INACTIVITY_MS &&
-      time - row.session.createdAt.getTime() < SESSION_ABSOLUTE_MS;
-    if (!live) {
-      if (row) await db.delete(sessions).where(eq(sessions.id, id));
-      reply.clearCookie(SESSION_COOKIE, { path: '/' });
-      return 'expired' as const;
-    }
-    await db.update(sessions).set({ lastSeenAt: now() }).where(eq(sessions.id, id));
-    return toActor(row.user);
-  }
+  const { currentSession } = createSessionReader({ db, now, secureCookies });
 
   api.addHook('onRequest', async (request, reply) => {
-    const actor = await sessionActor(request, reply);
-    if (actor === 'expired') return reply.code(401).send({ error: 'session_expired' });
+    const session = await currentSession(request, reply);
+    if (session === 'expired') return reply.code(401).send({ error: 'session_expired' });
+    const actor = session === 'guest' ? 'guest' : toActor(session);
     if (actor === 'guest' || !isAdmin(actor)) {
       request.log.warn(
         {

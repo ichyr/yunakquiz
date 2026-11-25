@@ -27,6 +27,8 @@ Vitest with `app.inject()` against the real Postgres database from Docker Compos
 - `buildApp` needs `passwordPeppers` (`PASSWORD_PEPPERS=v2:<secret>,v1:<secret>`, secrets at least 16 characters) and throws without it. The dev pepper is in `.env.development`; production sets its own.
 - Mutating routes need the `X-Requested-With` header (any value). Other env: `WEB_BASE_URL` (mailed links), `CORS_ORIGINS` (comma-separated allowlist, unset means same origin), `NODE_ENV` (the Secure cookie and the test Account seed treat anything but an explicit `development` or `test` as production; `.env.development` sets `development`).
 - Tests build apps with `buildAuthApp` from `test/app.ts`: fake Mailer, movable clock (`advance`), a unique recipient from `uniqueEmail()`.
+- Self-service changes (display name, password, email, delete) are in `src/account.ts`; the session lookup they share with `auth.ts` is `src/session.ts`. Password, email and delete need the current password, limited per Account. An email change always answers 202 (a taken address gets the "you already have an Account" mail instead of a link) and takes effect only on `POST /api/account/email/confirm`.
+- `pnpm db:cleanup-unverified` deletes Accounts unverified for 7 days (`src/cleanup.ts`). Run it daily from a scheduler (cron, EventBridge) with `DATABASE_URL` set; it prints how many it removed.
 - `pnpm db:seed:test-account --email … --name … --password …` creates a verified Account for e2e. It refuses to run in production.
 
 ## Admin

@@ -20,7 +20,7 @@ test('register, confirm the address from the mail, log in', async ({ page }) => 
   await page.getByRole('button', { name: uk.auth.register }).click();
   await expect(page.getByText(uk.auth.registerPage.sentTitle)).toBeVisible();
 
-  const mail = await waitForMail(email);
+  const mail = await waitForMail(email, { timeoutMs: 20_000 });
   const link = /https?:\/\/\S+\/verify\?token=[\w-]+/.exec(mail.Body.text_part ?? '')?.[0];
   expect(link).toBeTruthy();
   // The mailed link points at the web app; open it on the server this test runs against.

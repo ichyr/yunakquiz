@@ -483,3 +483,23 @@ describe('parseRegistrationMode', () => {
     expect(() => parseRegistrationMode('Closed')).toThrow(/REGISTRATION_MODE/);
   });
 });
+
+describe('last Admin across the self-service route', () => {
+  it('keeps one Admin when two Admins delete their own Accounts at once', async () => {
+    const ctx = start();
+    const a = await adminSession(ctx);
+    const b = await adminSession(ctx);
+    const results = await Promise.all(
+      [a, b].map((admin) =>
+        ctx.app.inject({
+          method: 'POST',
+          url: '/api/account/delete',
+          headers: { ...csrfHeaders, cookie: admin.cookie },
+          payload: { currentPassword: strongPassword },
+        }),
+      ),
+    );
+    expect(results.map((r) => r.statusCode).toSorted()).toEqual([204, 409]);
+    expect(await db.select().from(users).where(eq(users.role, 'admin'))).toHaveLength(1);
+  });
+});

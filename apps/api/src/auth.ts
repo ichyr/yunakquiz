@@ -11,18 +11,20 @@ import { oneTimeTokens, sessions, users } from './db/schema.ts';
 import { existingAccountMail, verificationMail } from './mail-templates.ts';
 import type { Mailer } from './mailer.ts';
 import type { PasswordHasher } from './passwords.ts';
+import {
+  createSessionReader,
+  SESSION_ABSOLUTE_MS,
+  SESSION_COOKIE,
+  SESSION_INACTIVITY_MS,
+  VERIFICATION_TTL_MS,
+} from './session.ts';
 import { createKeyedLimiter } from './rate-limit.ts';
 import { hashToken, newToken } from './tokens.ts';
 import { createUser, findUserByDisplayName, findUserByEmail, toAccount } from './users.ts';
 
 /** Design and reasons: ADR 0008. Hand-rolled on purpose: ADR 0010. */
 
-const HOUR = 60 * 60 * 1000;
-export const SESSION_INACTIVITY_MS = HOUR;
-export const SESSION_ABSOLUTE_MS = 12 * HOUR;
-export const VERIFICATION_TTL_MS = 24 * HOUR;
-
-const SESSION_COOKIE = 'sid';
+export { SESSION_ABSOLUTE_MS, SESSION_INACTIVITY_MS, VERIFICATION_TTL_MS };
 
 export type AuthLimits = {
   /** Per client address, on register and login. */
@@ -58,38 +60,11 @@ export async function authRoutes(api: FastifyInstance, deps: AuthDeps) {
     mailer.send(mail).catch((error) => request.log.error(error, 'Sending mail failed'));
   };
 
-  const cookieOptions = {
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: secureCookies,
-    path: '/',
-  } as const;
-  const clearSessionCookie = (reply: FastifyReply) =>
-    reply.clearCookie(SESSION_COOKIE, cookieOptions);
-
-  /** The signed-in user, 'guest' without a cookie, or 'expired' for a cookie with no live session. */
-  async function currentSession(request: FastifyRequest, reply: FastifyReply) {
-    const token = request.cookies[SESSION_COOKIE];
-    if (!token) return 'guest' as const;
-    const id = hashToken(token);
-    const [row] = await db
-      .select({ session: sessions, user: users })
-      .from(sessions)
-      .innerJoin(users, eq(users.id, sessions.userId))
-      .where(eq(sessions.id, id));
-    const time = clock();
-    const live =
-      row &&
-      time - row.session.lastSeenAt.getTime() < SESSION_INACTIVITY_MS &&
-      time - row.session.createdAt.getTime() < SESSION_ABSOLUTE_MS;
-    if (!live) {
-      if (row) await db.delete(sessions).where(eq(sessions.id, id));
-      clearSessionCookie(reply);
-      return 'expired' as const;
-    }
-    await db.update(sessions).set({ lastSeenAt: now() }).where(eq(sessions.id, id));
-    return row.user;
-  }
+  const { cookieOptions, clearSessionCookie, currentSession } = createSessionReader({
+    db,
+    now,
+    secureCookies,
+  });
 
   api.get('/me', async (request, reply) => {
     const session = await currentSession(request, reply);
