@@ -6,7 +6,7 @@ Before writing or reviewing code here, read [CODING_STANDARDS.md](CODING_STANDAR
 
 ## Database
 
-- Seed Quizzes live in `seed/`; load them with `pnpm db:seed`.
+- The database is the only source of truth for Quizzes (ADR 0009). Seed Quizzes live in `seed/`; `pnpm db:seed` imports each one once, as an ownerless published Quiz, and skips any slug that exists. It never updates or deletes a Quiz or Category, so edits and Quizzes written in the app survive a rerun. Do not add code that makes the seed delete.
 - After changing the Drizzle schema, run `pnpm db:generate`, then `pnpm db:migrate`.
 
 ## Testing
@@ -37,3 +37,12 @@ Vitest with `app.inject()` against the real Postgres database from Docker Compos
 - Every change to who is an Admin (promote, demote, delete, the first-Admin seed) takes `lockAdminChanges(tx)` first, a Postgres advisory lock, and reads the Admin count and the actor under it. New code that deletes or demotes an Account must take the same lock, or the last-Admin rule is no longer race-safe.
 - Admin actions are logged with `event: "admin_action"`, ids only: never emails, passwords or cookies.
 - `REGISTRATION_MODE=open|closed` (`src/registration-mode.ts`; closed answers 403 `registration_closed` on `/api/register`). `pnpm --filter @yunakquiz/api db:seed:admin` creates the first Admin from `FIRST_ADMIN_EMAIL`, `FIRST_ADMIN_NAME` and `FIRST_ADMIN_PASSWORD`; it runs in production and does nothing when an Admin exists.
+
+## Quizzes and authoring
+
+- `quizzes` has `author_id` (nullable, `ON DELETE SET NULL`), `status` (`draft`|`published`, no default on purpose), `version`, `published_at`, `updated_at`. Every path that deletes an Account (self, Admin, unverified cleanup) leaves its Quizzes ownerless; keep it so.
+- Guests: every public query (`src/quizzes.ts`: Category list, Category page, search, Quiz screen) filters `status = 'published'` through one `published` condition. A new public query must use it. Draft content leaves the API only through `/api/authoring` to its Author and Admins.
+- Authoring routes: `src/authoring.ts`, data in `src/authoring-quizzes.ts`, under `/api/authoring`. 401 for Guests, 403 `verification_required` for unverified Accounts (checked in a hook before any body is read, so the 16 MiB body limit is reachable only by verified Accounts). Permissions are the core functions (`canEditQuiz`, `canChangeSlug`, ...).
+- A draft the actor may not see answers 404, the same as a missing slug, on read, save, publish and delete; a published Quiz they may not change answers 403. Do not add a route that tells the two apart for drafts. Slug uniqueness is global, so `slug_taken` and the slug check do reveal that a slug is in use.
+- Writes lock the row with `FOR UPDATE`, then check permission, `version` (409 `version_conflict` with `currentVersion`) and the slug rule (403 `slug_locked` after first publish, Admins excepted). A published Quiz is saved only if it still passes `quizSchema` (422 `invalid_quiz` with `issues`), so Guests never get a broken Quiz. Publish stores the parsed content (canonical language).
+- Limits (100 Questions, 10 Options, 5,000 characters, 20 Categories) are in core and checked on every write.
