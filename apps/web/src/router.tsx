@@ -1,6 +1,7 @@
 import { createBrowserRouter } from 'react-router';
 import { AppLayout } from './components/AppLayout.tsx';
 import { LoadingState } from './components/LoadingState.tsx';
+import { AdminGate } from './routes/AdminGate.tsx';
 import { NotFoundPage } from './routes/NotFoundPage.tsx';
 import { RootLayout } from './routes/RootLayout.tsx';
 import { RouteErrorPage } from './routes/RouteErrorPage.tsx';
@@ -49,6 +50,8 @@ export const router = createBrowserRouter([
         path: '/verify',
         lazy: () => import('./routes/VerifyPage.tsx').then((m) => ({ Component: m.VerifyPage })),
       },
+      // Guarded: AdminGate loads the Admin chunk only for an Admin.
+      { path: '/admin/users', element: <AdminGate /> },
       { path: '*', element: <NotFoundPage /> },
     ],
   },

@@ -31,6 +31,8 @@ export const adminUserPageSchema = z.object({
   pageSize: z.number().int(),
   /** Admins right now, so the web app can hide controls on the last one. */
   adminCount: z.number().int(),
+  /** The requesting Admin, so the web app can build the actor for the permission functions. */
+  actorId: z.number().int(),
 });
 
 export type AdminUser = z.infer<typeof adminUserSchema>;

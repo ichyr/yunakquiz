@@ -21,6 +21,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Guest: Story = { args: { account: null } };
 export const SignedIn: Story = { args: { account } };
+export const Admin: Story = { args: { account: { ...account, role: 'admin' } } };
 export const LongName: Story = {
   args: { account: { ...account, displayName: 'Олена Коваленко-Шевченко з Полтавського куреня' } },
 };

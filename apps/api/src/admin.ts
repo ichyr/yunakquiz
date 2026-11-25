@@ -85,7 +85,11 @@ export async function adminRoutes(api: FastifyInstance, deps: AdminDeps) {
   api.get('/users', async (request, reply) => {
     const query = adminUserListQuerySchema.safeParse(request.query);
     if (!query.success) return reply.code(400).send({ error: 'invalid_input' });
-    return listUsers(db, { q: query.data.q || undefined, page: query.data.page });
+    return listUsers(db, {
+      q: query.data.q || undefined,
+      page: query.data.page,
+      actorId: request.adminActor!.id,
+    });
   });
 
   api.patch('/users/:id/role', async (request, reply) => {

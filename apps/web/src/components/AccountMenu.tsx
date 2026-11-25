@@ -34,6 +34,11 @@ export function AccountMenu({ account, onLogout }: AccountMenuProps) {
       >
         {account.displayName}
       </span>
+      {account.role === 'admin' && account.verified && (
+        <Button asChild size="sm" variant="ghost">
+          <Link to="/admin/users">{t('admin.nav')}</Link>
+        </Button>
+      )}
       <Button size="sm" variant="ghost" onClick={onLogout}>
         {t('auth.logout')}
       </Button>

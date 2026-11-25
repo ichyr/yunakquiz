@@ -43,7 +43,7 @@ const likePattern = (text: string) => `%${text.replace(/[\\%_]/g, '\\$&')}%`;
 
 export async function listUsers(
   db: Db,
-  { q, page }: { q: string | undefined; page: number },
+  { q, page, actorId }: { q: string | undefined; page: number; actorId: number },
 ): Promise<AdminUserPage> {
   const where = q
     ? or(ilike(users.displayName, likePattern(q)), ilike(users.email, likePattern(q)))
@@ -78,6 +78,7 @@ export async function listUsers(
     page,
     pageSize: ADMIN_USERS_PAGE_SIZE,
     adminCount,
+    actorId,
   };
 }
 

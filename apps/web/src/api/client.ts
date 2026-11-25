@@ -44,14 +44,18 @@ export function isSessionExpired(error: unknown): boolean {
 /** Mutating requests carry this header; the API refuses them without it (CSRF, ADR 0008). */
 const csrfHeaders = { 'X-Requested-With': 'yunakquiz' };
 
-async function request(method: 'GET' | 'POST', path: string, body?: unknown): Promise<unknown> {
+export async function request(
+  method: 'GET' | 'POST' | 'PATCH' | 'DELETE',
+  path: string,
+  body?: unknown,
+): Promise<unknown> {
   const response = await fetch(`/api${path}`, {
     method,
     // The session cookie travels with every request.
     credentials: 'include',
     headers: {
       Accept: 'application/json',
-      ...(method === 'POST' && csrfHeaders),
+      ...(method !== 'GET' && csrfHeaders),
       ...(body !== undefined && { 'Content-Type': 'application/json' }),
     },
     ...(body !== undefined && { body: JSON.stringify(body) }),
@@ -77,7 +81,7 @@ function safeJson(text: string): unknown {
   }
 }
 
-async function get<T extends z.ZodType>(path: string, schema: T): Promise<z.infer<T>> {
+export async function get<T extends z.ZodType>(path: string, schema: T): Promise<z.infer<T>> {
   return schema.parse(await request('GET', path));
 }
 
