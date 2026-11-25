@@ -44,6 +44,17 @@ jobs:
           --health-interval 2s
           --health-timeout 5s
           --health-retries 15
+      localstack:
+        image: localstack/localstack:4.12
+        env:
+          SERVICES: ses
+        ports:
+          - 4566:4566
+        options: >-
+          --health-cmd "curl -sf http://localhost:4566/_localstack/health"
+          --health-interval 3s
+          --health-timeout 5s
+          --health-retries 20
     env:
       TEST_DATABASE_URL: postgres://yunakquiz:yunakquiz@localhost:5432/yunakquiz_test
     steps:
@@ -54,6 +65,12 @@ jobs:
           node-version-file: .node-version
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # compose.yaml does this through docker/localstack-init, which a service container cannot mount.
+      - name: Verify the SES sender in LocalStack
+        run: >-
+          curl -sf -X POST http://localhost:4566/
+          -H "Authorization: AWS4-HMAC-SHA256 Credential=test/20260101/us-east-1/ses/aws4_request"
+          -d "Action=VerifyEmailIdentity&Version=2010-12-01&EmailAddress=noreply@yunakquiz.test"
       - run: pnpm test
 
   e2e:
@@ -73,6 +90,17 @@ jobs:
           --health-interval 2s
           --health-timeout 5s
           --health-retries 15
+      localstack:
+        image: localstack/localstack:4.12
+        env:
+          SERVICES: ses
+        ports:
+          - 4566:4566
+        options: >-
+          --health-cmd "curl -sf http://localhost:4566/_localstack/health"
+          --health-interval 3s
+          --health-timeout 5s
+          --health-retries 20
     env:
       DATABASE_URL: postgres://yunakquiz:yunakquiz@localhost:5432/yunakquiz
     steps:
@@ -84,6 +112,12 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @yunakquiz/web exec playwright install --with-deps chromium
+      # compose.yaml does this through docker/localstack-init, which a service container cannot mount.
+      - name: Verify the SES sender in LocalStack
+        run: >-
+          curl -sf -X POST http://localhost:4566/
+          -H "Authorization: AWS4-HMAC-SHA256 Credential=test/20260101/us-east-1/ses/aws4_request"
+          -d "Action=VerifyEmailIdentity&Version=2010-12-01&EmailAddress=noreply@yunakquiz.test"
       - run: pnpm db:seed
       - run: pnpm test:e2e
       - uses: actions/upload-artifact@v7
