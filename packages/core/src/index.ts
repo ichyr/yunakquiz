@@ -15,3 +15,4 @@ export * from './permissions.ts';
 export * from './admin.ts';
 export * from './category-admin.ts';
 export * from './password-reset.ts';
+export * from './slug.ts';
