@@ -4,6 +4,12 @@ import Fastify, { type FastifyError } from 'fastify';
 import { sql } from 'drizzle-orm';
 import { z } from 'zod';
 import type { Db } from './db/client.ts';
+import {
+  categoriesResponse,
+  categoryResponse,
+  quizResponse,
+  quizSummariesResponse,
+} from './response-schemas.ts';
 import { findCategory, findQuiz, listCategories, searchQuizzes } from './quizzes.ts';
 
 const slugParams = z.object({ slug: z.string() });
@@ -76,22 +82,33 @@ export function buildApp({
         }
       });
 
-      api.get('/categories', () => listCategories(db));
+      api.get('/categories', { schema: { response: categoriesResponse } }, () =>
+        listCategories(db),
+      );
 
-      api.get('/categories/:slug', async (request, reply) => {
-        const params = slugParams.safeParse(request.params);
-        if (!params.success) return reply.code(400).send({ error: 'Invalid slug' });
-        const category = await findCategory(db, params.data.slug);
-        return category ?? reply.code(404).send({ error: 'Category not found' });
-      });
+      api.get(
+        '/categories/:slug',
+        { schema: { response: categoryResponse } },
+        async (request, reply) => {
+          const params = slugParams.safeParse(request.params);
+          if (!params.success) return reply.code(400).send({ error: 'Invalid slug' });
+          const category = await findCategory(db, params.data.slug);
+          return category ?? reply.code(404).send({ error: 'Category not found' });
+        },
+      );
 
-      api.get('/quizzes', async (request, reply) => {
-        const query = searchQuery.safeParse(request.query);
-        if (!query.success) return reply.code(400).send({ error: 'Query parameter q is required' });
-        return searchQuizzes(db, query.data.q);
-      });
+      api.get(
+        '/quizzes',
+        { schema: { response: quizSummariesResponse } },
+        async (request, reply) => {
+          const query = searchQuery.safeParse(request.query);
+          if (!query.success)
+            return reply.code(400).send({ error: 'Query parameter q is required' });
+          return searchQuizzes(db, query.data.q);
+        },
+      );
 
-      api.get('/quizzes/:slug', async (request, reply) => {
+      api.get('/quizzes/:slug', { schema: { response: quizResponse } }, async (request, reply) => {
         const params = slugParams.safeParse(request.params);
         if (!params.success) return reply.code(400).send({ error: 'Invalid slug' });
         const quiz = await findQuiz(db, params.data.slug);
