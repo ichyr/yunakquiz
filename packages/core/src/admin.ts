@@ -20,7 +20,7 @@ export const adminUserSchema = z.object({
   role: roleSchema,
   verified: z.boolean(),
   createdAt: z.string(),
-  /** Zero until authoring exists. */
+  /** Quizzes the Account wrote, drafts included. */
   quizCount: z.number().int(),
 });
 

@@ -56,3 +56,30 @@ export function canDeleteUser(
 export function canChangeOwnAccount(actor: Actor | null, target: { id: number }): boolean {
   return actor !== null && actor.id === target.id;
 }
+
+/** What the Quiz rules need to know about a Quiz. `authorId` is null for an ownerless Quiz. */
+export type QuizTarget = { authorId: number | null };
+
+/** Only verified Accounts author; an unverified Admin does not count as an Admin (see isAdmin). */
+export const canCreateQuiz = (actor: Actor | null): boolean => actor !== null && actor.verified;
+
+/**
+ * The Author of a Quiz, or any Admin. Ownerless Quizzes (seeded, or whose Author deleted their
+ * Account) are managed by Admins only. This also decides who may read a draft.
+ */
+export function canEditQuiz(actor: Actor | null, quiz: QuizTarget): boolean {
+  if (actor === null || !actor.verified) return false;
+  return isAdmin(actor) || (quiz.authorId !== null && quiz.authorId === actor.id);
+}
+
+export const canDeleteQuiz = canEditQuiz;
+export const canPublish = canEditQuiz;
+
+/** Authors may change the slug until the first publish; Admins always. */
+export function canChangeSlug(
+  actor: Actor | null,
+  quiz: QuizTarget & { everPublished: boolean },
+): boolean {
+  if (!canEditQuiz(actor, quiz)) return false;
+  return isAdmin(actor) || !quiz.everPublished;
+}
