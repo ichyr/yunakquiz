@@ -6,7 +6,13 @@ import { optionalEnv, requireEnv } from './env.ts';
 const { db, close } = createDb(requireEnv('DATABASE_URL'), {
   onError: (error) => app.log.error(error, 'Idle database client error'),
 });
-const app = buildApp({ db, logger: true });
+// TRUST_PROXY: number of proxy hops in front of the API (e.g. 1 behind one load balancer).
+// Unset means no proxy, so X-Forwarded-For is ignored and cannot spoof the rate limit.
+const trustProxyHops = Number(optionalEnv('TRUST_PROXY', '0'));
+if (!Number.isInteger(trustProxyHops) || trustProxyHops < 0) {
+  throw new Error('TRUST_PROXY must be a non-negative integer (number of proxy hops)');
+}
+const app = buildApp({ db, logger: true, trustProxy: trustProxyHops > 0 ? trustProxyHops : false });
 
 // On SIGINT/SIGTERM (or a fatal error): stop accepting connections, drain in-flight
 // requests, then end the pool. Force-exit if that takes longer than `delay`.

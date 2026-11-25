@@ -271,3 +271,91 @@ describe('when the database is unreachable', () => {
     expect(response.json()).toEqual({ error: 'Internal Server Error' });
   });
 });
+
+describe('GET /api/live', () => {
+  it('stays ok when the database is down', async () => {
+    const unreachable = createDb('postgres://yunakquiz:yunakquiz@localhost:1/yunakquiz');
+    const offline = buildApp({ db: unreachable.db });
+    const response = await offline.inject({ method: 'GET', url: '/api/live' });
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ status: 'ok' });
+    await offline.close();
+    await unreachable.close();
+  });
+});
+
+describe('shutdown', () => {
+  it('makes /api/health answer 503 once closing starts', async () => {
+    const closing = buildApp({ db });
+    // Keeps the server accepting requests after our preClose hook ran.
+    let release = () => {};
+    const held = new Promise<void>((resolve) => (release = resolve));
+    closing.addHook('preClose', () => held);
+    await closing.listen({ port: 0, host: '127.0.0.1' });
+    const url = `http://127.0.0.1:${(closing.server.address() as { port: number }).port}/api/health`;
+    expect((await fetch(url)).status).toBe(200);
+    const closed = closing.close();
+    await new Promise((resolve) => setImmediate(resolve));
+    const response = await fetch(url, { headers: { connection: 'close' } });
+    release();
+    await closed;
+    expect(response.status).toBe(503);
+  });
+});
+
+describe('security headers', () => {
+  it('are set on API responses', async () => {
+    const response = await app.inject({ method: 'GET', url: '/api/categories' });
+    expect(response.headers['x-content-type-options']).toBe('nosniff');
+    expect(response.headers['strict-transport-security']).toBeDefined();
+  });
+});
+
+describe('rate limit', () => {
+  it('answers 429 in the API error shape once the limit is spent', async () => {
+    const limited = buildApp({ db, rateLimit: { max: 2, timeWindow: '1 minute' } });
+    const statuses: number[] = [];
+    let last;
+    for (let i = 0; i < 3; i++) {
+      last = await limited.inject({ method: 'GET', url: '/api/categories' });
+      statuses.push(last.statusCode);
+    }
+    expect(statuses).toEqual([200, 200, 429]);
+    expect(last?.json()).toEqual({ error: 'Too many requests' });
+    await limited.close();
+  });
+
+  it('does not limit health checks', async () => {
+    const limited = buildApp({ db, rateLimit: { max: 1, timeWindow: '1 minute' } });
+    for (let i = 0; i < 3; i++) {
+      expect((await limited.inject({ method: 'GET', url: '/api/health' })).statusCode).toBe(200);
+    }
+    await limited.close();
+  });
+});
+
+describe('trustProxy', () => {
+  it('uses X-Forwarded-For as the client address when enabled', async () => {
+    const limited = buildApp({
+      db,
+      trustProxy: true,
+      rateLimit: { max: 1, timeWindow: '1 minute' },
+    });
+    const call = (ip: string) =>
+      limited.inject({ method: 'GET', url: '/api/categories', headers: { 'x-forwarded-for': ip } });
+    expect((await call('10.0.0.1')).statusCode).toBe(200);
+    expect((await call('10.0.0.2')).statusCode).toBe(200);
+    expect((await call('10.0.0.1')).statusCode).toBe(429);
+    await limited.close();
+  });
+});
+
+describe('rate limit allow list', () => {
+  it('does not exempt paths that only start like a probe', async () => {
+    const limited = buildApp({ db, rateLimit: { max: 1, timeWindow: '1 minute' } });
+    const call = () => limited.inject({ method: 'GET', url: '/api/categories?x=/api/health' });
+    await call();
+    expect((await call()).statusCode).toBe(429);
+    await limited.close();
+  });
+});
