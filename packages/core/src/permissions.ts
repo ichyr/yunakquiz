@@ -56,3 +56,8 @@ export function canDeleteUser(
 export function canChangeOwnAccount(actor: Actor | null, target: { id: number }): boolean {
   return actor !== null && actor.id === target.id;
 }
+
+/** Categories are managed by verified Admins only; Authors choose from the existing ones. */
+export function canManageCategories(actor: Actor | null): boolean {
+  return isAdmin(actor);
+}
