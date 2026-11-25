@@ -5,6 +5,7 @@ import rateLimit from '@fastify/rate-limit';
 import Fastify, { type FastifyError } from 'fastify';
 import { sql } from 'drizzle-orm';
 import { z } from 'zod';
+import { accountRoutes } from './account.ts';
 import { authRoutes, defaultAuthLimits, type AuthLimits } from './auth.ts';
 import type { Db } from './db/client.ts';
 import { createPasswordHasher, parsePeppers } from './passwords.ts';
@@ -116,7 +117,7 @@ export function buildApp({
         }
       });
 
-      api.register(authRoutes, {
+      const authDeps = {
         db,
         mailer,
         hasher,
@@ -127,7 +128,9 @@ export function buildApp({
           perIp: { ...defaultAuthLimits.perIp, ...authLimits.perIp },
           perEmail: { ...defaultAuthLimits.perEmail, ...authLimits.perEmail },
         },
-      });
+      };
+      api.register(authRoutes, authDeps);
+      api.register(accountRoutes, authDeps);
 
       // Liveness: the process is up. Never touches the database.
       api.get('/live', async () => ({ status: 'ok' }));

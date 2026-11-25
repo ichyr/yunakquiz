@@ -42,6 +42,26 @@ export const accountSchema = z.object({
   interfaceLanguage: interfaceLanguageSchema,
 });
 
+const passwordInput = z.string().min(1).max(PASSWORD_INPUT_MAX_LENGTH);
+
+export const changeDisplayNameInputSchema = z.object({ displayName });
+
+/** The current password is checked by the API; the new one by `validatePassword`. */
+export const changePasswordInputSchema = z.object({
+  currentPassword: passwordInput,
+  newPassword: passwordInput,
+});
+
+/** Asking for a new address needs the current password: a stolen session alone cannot move the Account. */
+export const changeEmailInputSchema = z.object({ newEmail: email, currentPassword: passwordInput });
+
+export const deleteAccountInputSchema = z.object({ currentPassword: passwordInput });
+
+export type ChangeDisplayNameInput = z.input<typeof changeDisplayNameInputSchema>;
+export type ChangePasswordInput = z.input<typeof changePasswordInputSchema>;
+export type ChangeEmailInput = z.input<typeof changeEmailInputSchema>;
+export type DeleteAccountInput = z.input<typeof deleteAccountInputSchema>;
+
 export type InterfaceLanguage = z.infer<typeof interfaceLanguageSchema>;
 export type RegisterInput = z.input<typeof registerInputSchema>;
 export type LoginInput = z.input<typeof loginInputSchema>;

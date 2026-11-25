@@ -45,7 +45,7 @@ export const sessions = pgTable('sessions', {
   lastSeenAt: timestamp({ withTimezone: true }).notNull(),
 });
 
-export type TokenPurpose = 'verify_email' | 'reset_password';
+export type TokenPurpose = 'verify_email' | 'reset_password' | 'change_email';
 
 /** Single-use mailed tokens. `id` is the SHA-256 hash of the token; a used token is deleted. */
 export const oneTimeTokens = pgTable(
@@ -56,12 +56,14 @@ export const oneTimeTokens = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
     purpose: text().$type<TokenPurpose>().notNull(),
+    // Only for change_email: the address the link confirms.
+    newEmail: citext(),
     expiresAt: timestamp({ withTimezone: true }).notNull(),
   },
   (table) => [
     check(
       'one_time_tokens_purpose_check',
-      sql`${table.purpose} in ('verify_email', 'reset_password')`,
+      sql`${table.purpose} in ('verify_email', 'reset_password', 'change_email')`,
     ),
   ],
 );
