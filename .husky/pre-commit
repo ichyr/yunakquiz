@@ -1,3 +1,3 @@
-files=$(git diff --cached --name-only --diff-filter=ACMR)
+files=$(git diff --cached --name-only --diff-filter=ACMR | while read -r f; do [ -L "$f" ] || echo "$f"; done)
 [ -z "$files" ] && exit 0
 echo "$files" | xargs pnpm exec prettier --check --ignore-unknown
