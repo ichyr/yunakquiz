@@ -6,6 +6,7 @@ import {
 } from '@yunakquiz/core';
 import type { FastifyInstance, FastifyReply } from 'fastify';
 import { z } from 'zod';
+import { adminCategoryRoutes } from './admin-categories.ts';
 import { changeRole, deleteUserAsAdmin, listUsers, toActor } from './admin-users.ts';
 import type { Db } from './db/client.ts';
 import { createSessionReader } from './session.ts';
@@ -54,6 +55,8 @@ export async function adminRoutes(api: FastifyInstance, deps: AdminDeps) {
     }
     request.adminActor = actor;
   });
+
+  api.register(adminCategoryRoutes, { db });
 
   api.get('/users', async (request, reply) => {
     const query = adminUserListQuerySchema.safeParse(request.query);
