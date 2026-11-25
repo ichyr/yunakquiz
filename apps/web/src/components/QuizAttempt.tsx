@@ -36,8 +36,7 @@ export function QuizAttempt({ quiz }: { quiz: QuizView }) {
           attempt={attempt}
           scoreRef={scoreRef}
           onTryAgain={() => {
-            tryAgain();
-            moveToTop();
+            if (tryAgain()) moveToTop();
           }}
         />
       ) : (
@@ -47,8 +46,7 @@ export function QuizAttempt({ quiz }: { quiz: QuizView }) {
           titleRef={titleRef}
           onChoose={choose}
           onFinish={() => {
-            finish();
-            moveToTop();
+            if (finish()) moveToTop();
           }}
         />
       )}
