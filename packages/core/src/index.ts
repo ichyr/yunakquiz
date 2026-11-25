@@ -10,3 +10,4 @@ export {
 } from './review.ts';
 export * from './explanation.ts';
 export * from './password.ts';
+export * from './account.ts';
