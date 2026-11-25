@@ -5,7 +5,6 @@ import { uk } from '../src/i18n/locales/uk.ts';
 import { loginAsAdmin, loginAsUser } from './auth.ts';
 
 // Accounts through the real forms. Mail is read from LocalStack SES (`pnpm db:up`).
-// Password reset and name change get their flows here when tickets #77 and #78 land.
 
 test('register, confirm the address from the mail, log in', async ({ page }) => {
   const id = randomUUID();
@@ -33,6 +32,52 @@ test('register, confirm the address from the mail, log in', async ({ page }) => 
   await page.getByRole('button', { name: uk.auth.login }).click();
   await expect(page.getByText(displayName)).toBeVisible();
   await expect(page.getByRole('link', { name: uk.admin.nav })).toHaveCount(0);
+});
+
+test('reset a forgotten password from the mail, then log in with the new one', async ({
+  page,
+  request,
+}) => {
+  const user = await loginAsUser(request);
+  const newPassword = 'copper river under pale morning sky';
+
+  await page.goto('/login');
+  await page.getByRole('link', { name: uk.passwordReset.forgotLink }).click();
+  await expect(page.getByRole('heading', { name: uk.passwordReset.requestTitle })).toBeVisible();
+  await page.getByLabel(uk.auth.email).fill(user.email);
+  await page.getByRole('button', { name: uk.passwordReset.requestSubmit }).click();
+  await expect(page.getByText(uk.passwordReset.sentTitle)).toBeVisible();
+
+  const mail = await waitForMail(user.email, { timeoutMs: 20_000 });
+  const link = /https?:\/\/\S+\/reset-password\?token=[\w-]+/.exec(mail.Body.text_part ?? '')?.[0];
+  expect(link).toBeTruthy();
+  await page.goto(new URL(link!).pathname + new URL(link!).search);
+  await page.getByLabel(uk.passwordReset.newPassword).fill(newPassword);
+  await page.getByRole('button', { name: uk.passwordReset.completeSubmit }).click();
+  await expect(page.getByText(uk.passwordReset.doneTitle)).toBeVisible();
+
+  await page.getByRole('status').getByRole('link', { name: uk.auth.login }).click();
+  await page.getByLabel(uk.auth.email).fill(user.email);
+  await page.getByLabel(uk.auth.password).fill(newPassword);
+  await page.getByRole('button', { name: uk.auth.login }).click();
+  await expect(page.getByText(user.displayName)).toBeVisible();
+});
+
+test('change the display name in the account settings', async ({ browser, request }) => {
+  const user = await loginAsUser(request);
+  const context = await browser.newContext({ storageState: user.storageState });
+  const page = await context.newPage();
+  const newName = `Пластун ${randomUUID().slice(0, 8)}`;
+
+  await page.goto('/account');
+  await page.getByLabel(uk.auth.displayName).fill(newName);
+  await page.getByRole('button', { name: uk.account.displayName.submit }).click();
+  await expect(page.getByText(uk.account.displayName.saved)).toBeVisible();
+
+  await page.goto('/');
+  await expect(page.getByText(newName)).toBeVisible();
+  await expect(page.getByText(user.displayName)).toHaveCount(0);
+  await context.close();
 });
 
 test('an Admin promotes a User, then deletes them', async ({ browser, request }) => {

@@ -17,14 +17,14 @@ export function AppLayout({ children, account, notice }: AppLayoutProps) {
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="border-b bg-card">
-        <div className="mx-auto flex w-full max-w-2xl items-center justify-between gap-4 px-4 py-3">
+        <div className="mx-auto flex w-full max-w-2xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3">
           <Link to="/" className="focus-ring flex flex-col rounded-sm">
             <span className="text-lg font-bold text-primary">{t('app.name')}</span>
             <span className="hidden text-xs text-muted-foreground sm:block">
               {t('app.tagline')}
             </span>
           </Link>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {account}
             <LanguageSwitcher />
           </div>
