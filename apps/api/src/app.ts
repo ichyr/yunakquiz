@@ -10,7 +10,14 @@ import {
   quizResponse,
   quizSummariesResponse,
 } from './response-schemas.ts';
+import { createFakeMailer, type Mailer } from './mailer.ts';
 import { findCategory, findQuiz, listCategories, searchQuizzes } from './quizzes.ts';
+
+declare module 'fastify' {
+  interface FastifyInstance {
+    mailer: Mailer;
+  }
+}
 
 const slugParams = z.object({ slug: z.string() });
 const searchQuery = z.object({ q: z.string().trim().min(1) });
@@ -21,11 +28,14 @@ export type RateLimitOptions = { max: number; timeWindow: string };
 
 export function buildApp({
   db,
+  mailer = createFakeMailer(),
   logger = false,
   trustProxy = false,
   rateLimit: rateLimitOptions = { max: 300, timeWindow: '1 minute' },
 }: {
   db: Db;
+  /** Defaults to an in-memory fake, so an app built without one never sends real mail. */
+  mailer?: Mailer;
   logger?: boolean;
   /** Read the client address from X-Forwarded-For. Enable only behind a load balancer. */
   trustProxy?: boolean | number;
@@ -36,6 +46,8 @@ export function buildApp({
     requestTimeout: 30_000,
     trustProxy: typeof trustProxy === 'number' ? (_address, hop) => hop < trustProxy : trustProxy,
   });
+
+  app.decorate('mailer', mailer);
 
   // Readiness reports 503 as soon as shutdown starts, so the load balancer stops routing here.
   let closing = false;

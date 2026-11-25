@@ -19,5 +19,24 @@ services:
       timeout: 5s
       retries: 15
 
+  # Local SES. Pinned to a tag that runs without an auth token (see docs/localstack-licence.md).
+  localstack:
+    image: localstack/localstack:4.12
+    environment:
+      SERVICES: ses
+    ports:
+      - '4566:4566'
+    volumes:
+      - ./docker/localstack-init:/etc/localstack/init/ready.d:ro
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'curl -sf http://localhost:4566/_localstack/init/ready | grep -q "\"completed\": true"',
+        ]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+
 volumes:
   postgres-data:

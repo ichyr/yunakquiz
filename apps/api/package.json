@@ -8,6 +8,7 @@
     "start": "node src/server.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node --env-file=../../.env.development --env-file-if-exists=../../.env src/db/migrate.ts",
+    "mail:last": "node --env-file=../../.env.development scripts/mail-last.ts",
     "db:seed": "node --env-file=../../.env.development --env-file-if-exists=../../.env seed/run.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
@@ -20,6 +21,7 @@
     "vitest": "^5.0.5"
   },
   "dependencies": {
+    "@aws-sdk/client-ses": "^3.1176.0",
     "@fastify/helmet": "^13.2.0",
     "@fastify/rate-limit": "^11.3.0",
     "@yunakquiz/core": "workspace:*",
