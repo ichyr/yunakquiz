@@ -11,6 +11,10 @@ import { existsSync, globSync } from 'node:fs';
 const root = 'apps/web/src';
 const routePages = [
   'routes/AdminGate.tsx',
+  'routes/AuthorGate.tsx',
+  'routes/AuthorEditorPage.tsx',
+  'routes/AuthorPreviewPage.tsx',
+  'routes/AuthorQuizzesPage.tsx',
   'routes/AdminCategoriesPage.tsx',
   'routes/AdminUsersPage.tsx',
   'routes/CategoryPage.tsx',

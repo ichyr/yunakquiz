@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router';
 import { AppLayout } from './components/AppLayout.tsx';
 import { LoadingState } from './components/LoadingState.tsx';
 import { AdminGate } from './routes/AdminGate.tsx';
+import { AuthorGate } from './routes/AuthorGate.tsx';
 import { NotFoundPage } from './routes/NotFoundPage.tsx';
 import { RootLayout } from './routes/RootLayout.tsx';
 import { RouteErrorPage } from './routes/RouteErrorPage.tsx';
@@ -53,6 +54,11 @@ export const router = createBrowserRouter([
       // Guarded: AdminGate loads the Admin chunk only for an Admin.
       { path: '/admin/users', element: <AdminGate page="users" /> },
       { path: '/admin/categories', element: <AdminGate page="categories" /> },
+      // Guarded: AuthorGate loads the Author chunk only for a verified Account.
+      { path: '/author/quizzes', element: <AuthorGate page="list" /> },
+      { path: '/author/quizzes/new', element: <AuthorGate page="editor" /> },
+      { path: '/author/quizzes/:slug', element: <AuthorGate page="editor" /> },
+      { path: '/author/quizzes/:slug/preview', element: <AuthorGate page="preview" /> },
       {
         path: '/account',
         lazy: () => import('./routes/AccountPage.tsx').then((m) => ({ Component: m.AccountPage })),

@@ -21,6 +21,8 @@ export class ApiError extends Error {
   readonly status: number;
   readonly code: string | undefined;
   readonly issues: PasswordIssue[];
+  /** The parsed JSON body of the response, for codes that carry more (`version_conflict`, `invalid_quiz`). */
+  readonly body: unknown;
 
   constructor(
     status: number,
@@ -29,13 +31,15 @@ export class ApiError extends Error {
       method = 'GET',
       code,
       issues = [],
-    }: { method?: string; code?: string; issues?: PasswordIssue[] } = {},
+      body,
+    }: { method?: string; code?: string; issues?: PasswordIssue[]; body?: unknown } = {},
   ) {
     super(`${method} ${path} failed with ${status}`);
     this.name = 'ApiError';
     this.status = status;
     this.code = code;
     this.issues = issues;
+    this.body = body;
   }
 }
 
@@ -51,7 +55,7 @@ export function isSessionExpired(error: unknown): boolean {
 const csrfHeaders = { 'X-Requested-With': 'yunakquiz' };
 
 export async function request(
-  method: 'GET' | 'POST' | 'PATCH' | 'DELETE',
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
   path: string,
   body?: unknown,
 ): Promise<unknown> {
@@ -74,6 +78,7 @@ export async function request(
       method,
       ...(error !== undefined && { code: error }),
       ...(issues !== undefined && { issues }),
+      body: json,
     });
   }
   return json;

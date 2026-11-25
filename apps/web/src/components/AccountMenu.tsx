@@ -37,6 +37,9 @@ export function AccountMenu({ account, onLogout }: AccountMenuProps) {
           <span className="truncate">{account.displayName}</span>
         </Link>
       </Button>
+      <Button asChild size="sm" variant="ghost">
+        <Link to="/author/quizzes">{t('author.nav')}</Link>
+      </Button>
       {account.role === 'admin' && account.verified && (
         <Button asChild size="sm" variant="ghost">
           <Link to="/admin/users">{t('admin.nav')}</Link>
