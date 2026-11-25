@@ -10,8 +10,12 @@ const { values } = parseArgs({
     email: { type: 'string' },
     name: { type: 'string' },
     password: { type: 'string' },
+    role: { type: 'string', default: 'user' },
   },
 });
+if (values.role !== 'user' && values.role !== 'admin') {
+  throw new Error('--role must be "user" or "admin"');
+}
 if (!values.email || !values.name || !values.password) {
   throw new Error('Usage: --email <email> --name <display name> --password <password>');
 }
@@ -23,6 +27,7 @@ await seedTestAccount(db, {
   email: values.email,
   displayName: values.name,
   password: values.password,
+  role: values.role,
 });
 await close();
 console.log(`Test Account ${values.email} created and verified`);

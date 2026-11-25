@@ -19,3 +19,9 @@ Two Playwright specs in `e2e/`, run with `pnpm test:e2e`:
 
 - `main-path.spec.ts`: search, take a Quiz, see the Review.
 - `failure-paths.spec.ts`: offline and recovery, an Attempt carrying on offline, a broken link, and a failed request with Retry, and a screen that fails to load. Before going offline, a test opens every screen it will use offline (Search, for example), so its code is already loaded.
+
+## Admin screens
+
+The Admin screens (`routes/AdminUsersPage.tsx` and `api/admin.ts`) are one lazy chunk that `routes/AdminGate.tsx` loads with `React.lazy` only after `GET /me` shows an Admin, so Guests and Users never download it (ADR 0004). A router `lazy` route would fetch the chunk before the guard runs. Controls are hidden with the permission functions from core; the API is what refuses.
+
+The Playwright helpers `loginAsUser()` and `loginAsAdmin()` (`e2e/auth.ts`) make a verified Account through the test Account seed and save its session as `storageState`. `accounts.spec.ts` reads mail from LocalStack. Set `E2E_API_PORT`, `E2E_WEB_PORT` and `DATABASE_URL` when another checkout holds the default ports or database; the web server and the API both start from `playwright.config.ts`.

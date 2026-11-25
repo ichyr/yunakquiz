@@ -28,3 +28,10 @@ Vitest with `app.inject()` against the real Postgres database from Docker Compos
 - Mutating routes need the `X-Requested-With` header (any value). Other env: `WEB_BASE_URL` (mailed links), `CORS_ORIGINS` (comma-separated allowlist, unset means same origin), `NODE_ENV` (the Secure cookie and the test Account seed treat anything but an explicit `development` or `test` as production; `.env.development` sets `development`).
 - Tests build apps with `buildAuthApp` from `test/app.ts`: fake Mailer, movable clock (`advance`), a unique recipient from `uniqueEmail()`.
 - `pnpm db:seed:test-account --email … --name … --password …` creates a verified Account for e2e. It refuses to run in production.
+
+## Admin
+
+- Roles and Admin routes: `src/admin.ts` (all under `/api/admin`, 403 for anyone but a verified Admin), `src/admin-users.ts` (list, role change, deletion). Rules are the pure functions in `packages/core/src/permissions.ts`; the route loads actor and target, calls them, maps denial to 403.
+- Every change to who is an Admin (promote, demote, delete, the first-Admin seed) takes `lockAdminChanges(tx)` first, a Postgres advisory lock, and reads the Admin count and the actor under it. New code that deletes or demotes an Account must take the same lock, or the last-Admin rule is no longer race-safe.
+- Admin actions are logged with `event: "admin_action"`, ids only: never emails, passwords or cookies.
+- `REGISTRATION_MODE=open|closed` (`src/registration-mode.ts`; closed answers 403 `registration_closed` on `/api/register`). `pnpm --filter @yunakquiz/api db:seed:admin` creates the first Admin from `FIRST_ADMIN_EMAIL`, `FIRST_ADMIN_NAME` and `FIRST_ADMIN_PASSWORD`; it runs in production and does nothing when an Admin exists.

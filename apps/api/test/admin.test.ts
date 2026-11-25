@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm';
 import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { oneTimeTokens, sessions, users } from '../src/db/schema.ts';
 import { createPasswordHasher, parsePeppers } from '../src/passwords.ts';
+import { parseRegistrationMode } from '../src/registration-mode.ts';
 import { createUser } from '../src/users.ts';
 import { seedFirstAdmin } from '../seed/first-admin.ts';
 import {
@@ -472,5 +473,13 @@ describe('first Admin seed', () => {
     await expect(seedFirstAdmin(db, input({ email: existing.email }))).rejects.toThrow();
     const [row] = await db.select().from(users).where(eq(users.id, existing.id));
     expect(row?.role).toBe('user');
+  });
+});
+
+describe('parseRegistrationMode', () => {
+  it('defaults to open and refuses anything unknown instead of opening', () => {
+    expect(parseRegistrationMode(undefined)).toBe('open');
+    expect(parseRegistrationMode('closed')).toBe('closed');
+    expect(() => parseRegistrationMode('Closed')).toThrow(/REGISTRATION_MODE/);
   });
 });
