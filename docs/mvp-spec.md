@@ -46,7 +46,7 @@ Quiz lists and search results show each Quiz's title, description and Quiz Langu
 
 ## Out of scope for the MVP
 
-- Accounts, roles, and authoring or editing Quizzes in the app. Quizzes are seeded from files in the repo.
+- OAuth, SSO, MFA and passkeys. Accounts, roles and in-app Quiz authoring are no longer out of scope: see [ADR 0008](adr/0008-accounts-sessions-and-password-policy.md), [ADR 0009](adr/0009-quizzes-authored-in-app.md) and issue #70.
 - Storing Attempts, statistics, history.
 - Question types beyond single choice; rich text, images, video, audio.
 - Tags, a Question Bank, randomly drawn Questions.
@@ -56,5 +56,5 @@ Quiz lists and search results show each Quiz's title, description and Quiz Langu
 ## Seed content
 
 - One TypeScript file per Quiz, checked against the shared zod schema.
-- Loaded by a seed script that can be rerun safely. After a run the database matches the seed files: Quizzes whose file was removed, and Categories no Quiz uses, are removed.
+- The seed files are imported once as ownerless Quizzes. After that the database is the only source of truth for Quizzes ([ADR 0009](adr/0009-quizzes-authored-in-app.md)). The seed script creates dev and test fixtures only, can be rerun safely, and never deletes a Quiz it does not own.
 - First Quiz: "Іван Богун" (Quiz Language `uk`), in Categories "Патрони куренів" and "Історія України". Editorial source: [docs/content/ivan-bohun.md](content/ivan-bohun.md).
