@@ -12,6 +12,7 @@ import { and, count, desc, eq, ilike, isNotNull, or, sql } from 'drizzle-orm';
 import type { Db } from './db/client.ts';
 import { quizCountOf } from './authoring-quizzes.ts';
 import { users } from './db/schema.ts';
+import { toActor } from './session.ts';
 import type { UserRow } from './users.ts';
 
 /**
@@ -37,12 +38,6 @@ export async function countAdmins(db: Db | Tx): Promise<number> {
     .where(and(eq(users.role, 'admin'), isNotNull(users.verifiedAt)));
   return row?.value ?? 0;
 }
-
-export const toActor = (user: UserRow): Actor => ({
-  id: user.id,
-  role: user.role,
-  verified: user.verifiedAt !== null,
-});
 
 /** `%` and `_` in the search text match themselves. */
 const likePattern = (text: string) => `%${text.replace(/[\\%_]/g, '\\$&')}%`;

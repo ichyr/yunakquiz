@@ -17,14 +17,9 @@ import type { Mailer } from './mailer.ts';
 import { createKeyedLimiter } from './rate-limit.ts';
 import { createSessionReader, SESSION_COOKIE, VERIFICATION_TTL_MS } from './session.ts';
 import { hashToken, newToken } from './tokens.ts';
-import { findUserByEmail, toAccount, type UserRow } from './users.ts';
+import { findUserByEmail, toAccount, uniqueViolation, type UserRow } from './users.ts';
 
 /** Self-service Account changes: display name, password, email, delete. See ADR 0008. */
-
-function isUniqueViolation(error: unknown): boolean {
-  const pg = (error as { cause?: unknown })?.cause ?? error;
-  return (pg as { code?: string }).code === '23505';
-}
 
 export async function accountRoutes(api: FastifyInstance, deps: AuthDeps) {
   const { db, mailer, hasher, now, webBaseUrl, secureCookies, limits } = deps;
@@ -82,7 +77,7 @@ export async function accountRoutes(api: FastifyInstance, deps: AuthDeps) {
         .returning();
       return toAccount(updated!);
     } catch (error) {
-      if (!isUniqueViolation(error)) throw error;
+      if (uniqueViolation(error) === undefined) throw error;
       return reply.code(409).send({ error: 'display_name_taken' });
     }
   });
@@ -189,7 +184,7 @@ export async function accountRoutes(api: FastifyInstance, deps: AuthDeps) {
       if (!changed) return reply.code(400).send({ error: 'invalid_token' });
     } catch (error) {
       // The address got an Account after the mail went out.
-      if (!isUniqueViolation(error)) throw error;
+      if (uniqueViolation(error) === undefined) throw error;
       return reply.code(400).send({ error: 'invalid_token' });
     }
     return reply.code(204).send();

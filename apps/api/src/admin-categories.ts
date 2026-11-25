@@ -4,6 +4,7 @@ import { asc, eq } from 'drizzle-orm';
 import { z } from 'zod';
 import type { Db } from './db/client.ts';
 import { categories } from './db/schema.ts';
+import { uniqueViolation } from './users.ts';
 
 /**
  * Admin management of Categories. Registered inside the Admin scope in `admin.ts`, so the
@@ -17,12 +18,6 @@ export type CategoryRow = { id: number; slug: string; name: string };
 
 export type CategoryChange<T = undefined> =
   { ok: true; value: T } | { ok: false; reason: 'not_found' | 'slug_taken' };
-
-const isUniqueViolation = (error: unknown) => {
-  const code =
-    (error as { code?: string }).code ?? (error as { cause?: { code?: string } }).cause?.code;
-  return code === '23505';
-};
 
 export async function createCategory(
   db: Db,
@@ -42,7 +37,7 @@ export async function createCategory(
     return { ok: true, value: row! };
   } catch (error) {
     // Two creates racing for one slug: the unique index decides.
-    if (isUniqueViolation(error)) return { ok: false, reason: 'slug_taken' };
+    if (uniqueViolation(error) !== undefined) return { ok: false, reason: 'slug_taken' };
     throw error;
   }
 }

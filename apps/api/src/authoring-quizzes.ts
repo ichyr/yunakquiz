@@ -10,7 +10,8 @@ import {
   type DraftQuiz,
   type QuizIssue,
 } from '@yunakquiz/core';
-import { count, desc, eq, inArray, sql } from 'drizzle-orm';
+import type { Category } from '@yunakquiz/core';
+import { asc, count, desc, eq, inArray, sql } from 'drizzle-orm';
 import type { Db } from './db/client.ts';
 import { categories, quizCategories, quizzes, users } from './db/schema.ts';
 import { uniqueViolation } from './users.ts';
@@ -141,6 +142,14 @@ export function readQuiz(db: Db, actor: Actor, slug: string): Promise<AuthoringR
     if (!row) return { ok: false, reason: 'not_found' };
     return refusal(actor, row) ?? ok(await toView(tx, row));
   });
+}
+
+/** Every Category, also those with no published Quiz: the editor must offer them all. */
+export function listAllCategories(db: Db): Promise<Category[]> {
+  return db
+    .select({ slug: categories.slug, name: categories.name })
+    .from(categories)
+    .orderBy(asc(categories.name));
 }
 
 export function listQuizzes(db: Db, actor: Actor, page: number): Promise<AuthoringQuizPage> {
@@ -282,15 +291,19 @@ export function publishQuiz(
   });
 }
 
-export function deleteQuiz(db: Db, actor: Actor, slug: string): Promise<AuthoringResult<null>> {
-  return db.transaction(async (tx): Promise<AuthoringResult<null>> => {
+export function deleteQuiz(
+  db: Db,
+  actor: Actor,
+  slug: string,
+): Promise<AuthoringResult<{ authorId: number | null }>> {
+  return db.transaction(async (tx): Promise<AuthoringResult<{ authorId: number | null }>> => {
     const row = await lockQuiz(tx, slug);
     if (!row) return { ok: false, reason: 'not_found' };
     const denied = refusal(actor, row);
     if (denied) return denied;
     // Links go with it (ON DELETE CASCADE). Attempts are never stored (ADR 0006).
     await tx.delete(quizzes).where(eq(quizzes.id, row.id));
-    return ok(null);
+    return ok({ authorId: row.authorId });
   });
 }
 

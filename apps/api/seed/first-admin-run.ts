@@ -9,7 +9,7 @@ const { db, close } = createDb(requireEnv('DATABASE_URL'));
 try {
   await migrateDatabase(db);
   const result = await seedFirstAdmin(db, {
-    peppers: process.env.PASSWORD_PEPPERS,
+    peppers: requireEnv('PASSWORD_PEPPERS'),
     email: requireEnv('FIRST_ADMIN_EMAIL'),
     displayName: requireEnv('FIRST_ADMIN_NAME'),
     password: requireEnv('FIRST_ADMIN_PASSWORD'),

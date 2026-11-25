@@ -7,9 +7,9 @@ import {
 import type { FastifyInstance, FastifyReply } from 'fastify';
 import { z } from 'zod';
 import { adminCategoryRoutes } from './admin-categories.ts';
-import { changeRole, deleteUserAsAdmin, listUsers, toActor } from './admin-users.ts';
+import { changeRole, deleteUserAsAdmin, listUsers } from './admin-users.ts';
 import type { Db } from './db/client.ts';
-import { createSessionReader } from './session.ts';
+import { createSessionReader, toActor } from './session.ts';
 
 /**
  * Admin routes, all under /api/admin. The hook below answers 403 to everyone who is not a

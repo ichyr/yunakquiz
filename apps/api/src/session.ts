@@ -1,3 +1,4 @@
+import type { Actor } from '@yunakquiz/core';
 import { eq } from 'drizzle-orm';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { Db } from './db/client.ts';
@@ -13,6 +14,12 @@ export const SESSION_ABSOLUTE_MS = 12 * HOUR;
 export const VERIFICATION_TTL_MS = 24 * HOUR;
 
 export const SESSION_COOKIE = 'sid';
+
+export const toActor = (user: UserRow): Actor => ({
+  id: user.id,
+  role: user.role,
+  verified: user.verifiedAt !== null,
+});
 
 export type CurrentSession = UserRow | 'guest' | 'expired';
 

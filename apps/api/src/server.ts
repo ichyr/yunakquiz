@@ -35,7 +35,7 @@ const app = buildApp({
     .filter(Boolean),
   secureCookies: !isLocalEnvironment(),
   trustProxy: trustProxyHops > 0 ? trustProxyHops : false,
-  registrationMode: parseRegistrationMode(process.env.REGISTRATION_MODE),
+  registrationMode: parseRegistrationMode(optionalEnv('REGISTRATION_MODE', 'open')),
 });
 
 // On SIGINT/SIGTERM (or a fatal error): stop accepting connections, drain in-flight

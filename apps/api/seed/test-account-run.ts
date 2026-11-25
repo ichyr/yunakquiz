@@ -23,7 +23,7 @@ if (!values.email || !values.name || !values.password) {
 const { db, close } = createDb(requireEnv('DATABASE_URL'));
 await migrateDatabase(db);
 await seedTestAccount(db, {
-  peppers: process.env.PASSWORD_PEPPERS,
+  peppers: requireEnv('PASSWORD_PEPPERS'),
   email: values.email,
   displayName: values.name,
   password: values.password,

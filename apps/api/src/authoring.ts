@@ -1,16 +1,17 @@
 import {
   canCreateQuiz,
   draftQuizSchema,
+  isAdmin,
   publishQuizInputSchema,
   saveQuizInputSchema,
   type Actor,
 } from '@yunakquiz/core';
-import type { FastifyInstance, FastifyReply } from 'fastify';
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
-import { toActor } from './admin-users.ts';
 import {
   createDraft,
   deleteQuiz,
+  listAllCategories,
   listQuizzes,
   publishQuiz,
   readQuiz,
@@ -19,7 +20,7 @@ import {
   type AuthoringFailure,
 } from './authoring-quizzes.ts';
 import type { Db } from './db/client.ts';
-import { createSessionReader } from './session.ts';
+import { createSessionReader, toActor } from './session.ts';
 
 /**
  * Quiz authoring routes, all under /api/authoring. The hook answers before any body is read:
@@ -63,6 +64,24 @@ export async function authoringRoutes(api: FastifyInstance, deps: AuthoringDeps)
 
   const writeLimit = { rateLimit: { max: 60, timeWindow: '1 minute' } };
 
+  // Every Category, unlike the public list, which hides those without a published Quiz.
+  api.get('/categories', async () => listAllCategories(db));
+
+  // An Admin changing a Quiz they do not own is logged like any other Admin action: ids only.
+  const logAdminEdit = (
+    request: FastifyRequest,
+    action: 'save_quiz' | 'publish_quiz' | 'delete_quiz',
+    quizSlug: string,
+    ownerId: number | null,
+  ) => {
+    const actor = request.quizActor!;
+    if (!isAdmin(actor) || ownerId === actor.id) return;
+    request.log.info(
+      { event: 'admin_action', action, outcome: 'done', actorId: actor.id, ownerId, quizSlug },
+      'Admin action',
+    );
+  };
+
   api.get('/quizzes', async (request, reply) => {
     const query = pageQuery.safeParse(request.query);
     if (!query.success) return reply.code(400).send({ error: 'invalid_input' });
@@ -97,7 +116,9 @@ export async function authoringRoutes(api: FastifyInstance, deps: AuthoringDeps)
       const body = saveQuizInputSchema.safeParse(request.body);
       if (!body.success) return reply.code(400).send({ error: 'invalid_input' });
       const result = await saveQuiz(db, request.quizActor!, params.data.slug, body.data, now());
-      return result.ok ? result.value : fail(reply, result);
+      if (!result.ok) return fail(reply, result);
+      logAdminEdit(request, 'save_quiz', params.data.slug, result.value.authorId);
+      return result.value;
     },
   );
 
@@ -113,14 +134,18 @@ export async function authoringRoutes(api: FastifyInstance, deps: AuthoringDeps)
       body.data.version,
       now(),
     );
-    return result.ok ? result.value : fail(reply, result);
+    if (!result.ok) return fail(reply, result);
+    logAdminEdit(request, 'publish_quiz', params.data.slug, result.value.authorId);
+    return result.value;
   });
 
   api.delete('/quizzes/:slug', { config: writeLimit }, async (request, reply) => {
     const params = slugParams.safeParse(request.params);
     if (!params.success) return reply.code(404).send({ error: 'not_found' });
     const result = await deleteQuiz(db, request.quizActor!, params.data.slug);
-    return result.ok ? reply.code(204).send() : fail(reply, result);
+    if (!result.ok) return fail(reply, result);
+    logAdminEdit(request, 'delete_quiz', params.data.slug, result.value.authorId);
+    return reply.code(204).send();
   });
 
   // For the form's live check. `?quiz=<current slug>` lets an edited Quiz keep its own slug.

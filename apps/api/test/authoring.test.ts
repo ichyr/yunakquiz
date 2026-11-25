@@ -13,8 +13,8 @@ const hasher = createPasswordHasher(parsePeppers(testPeppers));
 
 type TestApp = ReturnType<typeof buildAuthApp>;
 const apps: { close: () => Promise<undefined> }[] = [];
-const start = (): TestApp => {
-  const built = buildAuthApp(db);
+const start = (options: Parameters<typeof buildAuthApp>[1] = {}): TestApp => {
+  const built = buildAuthApp(db, options);
   apps.push(built.app);
   return built;
 };
@@ -165,6 +165,7 @@ describe('who may use the authoring routes', () => {
     ['POST', '/api/authoring/quizzes/my-quiz/publish', { version: 1 }],
     ['DELETE', '/api/authoring/quizzes/my-quiz'],
     ['GET', '/api/authoring/slugs/my-quiz'],
+    ['GET', '/api/authoring/categories'],
   ];
 
   it.each(routes)('%s %s answers a Guest with 401', async (method, url, payload) => {
@@ -719,5 +720,85 @@ describe('deleting a Quiz', () => {
     expect((await author.call('DELETE', '/api/authoring/quizzes/my-quiz')).statusCode).toBe(204);
     expect((await author.call('GET', '/api/authoring/quizzes/my-quiz')).statusCode).toBe(404);
     expect((await author.call('DELETE', '/api/authoring/quizzes/my-quiz')).statusCode).toBe(404);
+  });
+});
+
+describe('all Categories for the editor', () => {
+  it('lists Categories with no published Quiz, which the public list hides', async () => {
+    const ctx = start();
+    const author = await actor(ctx);
+    await createDraft(author);
+    await db.insert(categories).values({ slug: 'empty', name: 'Порожня' });
+
+    const response = await author.call('GET', '/api/authoring/categories');
+    expect(response.statusCode).toBe(200);
+    const slugs = (response.json() as { slug: string }[]).map((c) => c.slug).sort();
+    expect(slugs).toEqual(['empty', 'history', 'knots']);
+
+    const publicList = await guest(ctx, 'GET', '/api/categories');
+    expect(publicList.json()).toEqual([]);
+  });
+
+  it('is open to a verified Admin', async () => {
+    const ctx = start();
+    const admin = await actor(ctx, 'admin');
+    expect((await admin.call('GET', '/api/authoring/categories')).statusCode).toBe(200);
+  });
+});
+
+describe("Admin actions on other people's Quizzes in the structured log", () => {
+  const capture = () => {
+    const lines: string[] = [];
+    const ctx = start({
+      logger: { level: 'info', stream: { write: (line: string) => void lines.push(line) } },
+    });
+    const actions = () =>
+      lines
+        .map((line) => JSON.parse(line) as Record<string, unknown>)
+        .filter((entry) => entry['event'] === 'admin_action');
+    return { ctx, lines, actions };
+  };
+
+  it('logs save, publish and delete by an Admin on a Quiz they do not own, ids only', async () => {
+    const { ctx, lines, actions } = capture();
+    const author = await actor(ctx);
+    const admin = await actor(ctx, 'admin');
+    const draft = await createDraft(author);
+
+    const saved = await admin.call('PUT', '/api/authoring/quizzes/my-quiz', {
+      ...completeDraft(),
+      title: 'Секретна назва',
+      version: draft.version,
+    });
+    expect(saved.statusCode).toBe(200);
+    const version = (saved.json() as { version: number }).version;
+    expect((await publish(admin, 'my-quiz', version)).statusCode).toBe(200);
+    expect((await admin.call('DELETE', '/api/authoring/quizzes/my-quiz')).statusCode).toBe(204);
+
+    expect(actions().map((a) => [a['action'], a['outcome']])).toEqual([
+      ['save_quiz', 'done'],
+      ['publish_quiz', 'done'],
+      ['delete_quiz', 'done'],
+    ]);
+    expect(actions()[0]).toMatchObject({
+      actorId: admin.id,
+      ownerId: author.id,
+      quizSlug: 'my-quiz',
+    });
+    const all = lines.join('');
+    expect(all).not.toContain('Секретна назва');
+    expect(all).not.toContain(author.email);
+    expect(all).not.toContain(admin.email);
+  });
+
+  it('does not log an Admin working on their own Quiz, or an Author on theirs', async () => {
+    const { ctx, actions } = capture();
+    const admin = await actor(ctx, 'admin');
+    const author = await actor(ctx);
+    await createDraft(admin, completeDraft('admin-quiz'));
+    await admin.call('DELETE', '/api/authoring/quizzes/admin-quiz');
+    await createDraft(author);
+    await author.call('DELETE', '/api/authoring/quizzes/my-quiz');
+    expect(actions()).toEqual([]);
   });
 });
