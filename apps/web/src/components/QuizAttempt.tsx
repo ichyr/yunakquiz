@@ -1,4 +1,4 @@
-import type { Quiz } from '@yunakquiz/core';
+import type { QuizView } from '@yunakquiz/core';
 import { useEffect, useRef } from 'react';
 import { useAttempt } from '@/quiz/useAttempt';
 import { useLeaveGuard } from '@/quiz/useLeaveGuard';
@@ -8,7 +8,7 @@ import { LeaveAttemptDialog } from './LeaveAttemptDialog.tsx';
 import { ReviewView } from './ReviewView.tsx';
 
 /** The Attempt, then its Review at the same address. */
-export function QuizAttempt({ quiz }: { quiz: Quiz }) {
+export function QuizAttempt({ quiz }: { quiz: QuizView }) {
   const { attempt, inProgress, choose, finish, tryAgain } = useAttempt(quiz);
   const blocker = useLeaveGuard(inProgress);
   const titleRef = useRef<HTMLHeadingElement>(null);
@@ -43,6 +43,7 @@ export function QuizAttempt({ quiz }: { quiz: Quiz }) {
       ) : (
         <AttemptView
           attempt={attempt}
+          author={quiz.author}
           titleRef={titleRef}
           onChoose={choose}
           onFinish={() => {

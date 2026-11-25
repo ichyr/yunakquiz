@@ -6,6 +6,6 @@ import { seed } from './seed.ts';
 
 const { db, close } = createDb(requireEnv('DATABASE_URL'));
 await migrateDatabase(db);
-const { added, updated, removed } = await seed(db, seedQuizzes);
+const { added, skipped } = await seed(db, seedQuizzes);
 await close();
-console.log(`Seeded Quizzes: ${added} added, ${updated} updated, ${removed} removed`);
+console.log(`Seeded Quizzes: ${added} added, ${skipped} already there`);

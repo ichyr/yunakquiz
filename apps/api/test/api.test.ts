@@ -1,8 +1,9 @@
 import { categoryWithQuizzesSchema, quizSchema } from '@yunakquiz/core';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
-import { buildApp } from '../src/app.ts';
+import { buildApp } from './app.ts';
 import { createDb } from '../src/db/client.ts';
-import { categories } from '../src/db/schema.ts';
+import { eq } from 'drizzle-orm';
+import { categories, quizzes } from '../src/db/schema.ts';
 import { seed } from '../seed/seed.ts';
 import { createTestDb, resetDatabase } from './database.ts';
 import { bohun, knots } from './fixtures.ts';
@@ -171,63 +172,73 @@ describe('GET /api/quizzes/:slug', () => {
 });
 
 describe('seed', () => {
-  it('updates Quizzes and their Categories when rerun', async () => {
-    await seed(db, [{ ...knots, title: 'Knots', categories: [bohun.categories[0]!] }]);
+  it('imports a Quiz as an ownerless published Quiz with its Categories', async () => {
+    await seed(db, [
+      { ...knots, slug: 'new-knots', categories: [{ slug: 'uzly', name: 'Вузли' }] },
+    ]);
 
-    expect((await get('/api/quizzes/basic-knots')).body).toMatchObject({
-      title: 'Knots',
-      categories: [{ slug: 'patrony-kureniv' }],
+    expect((await get('/api/quizzes/new-knots')).body).toMatchObject({
+      author: null,
+      categories: [{ slug: 'uzly' }],
     });
+    const [row] = await db.select().from(quizzes).where(eq(quizzes.slug, 'new-knots'));
+    expect(row).toMatchObject({ authorId: null, status: 'published', version: 1 });
+    expect(row?.publishedAt).toBeInstanceOf(Date);
   });
 
-  describe('when a Quiz is removed from the seed files', () => {
-    const knotsWithOwnCategory = {
-      ...knots,
-      categories: [...knots.categories, { slug: 'uzly', name: 'Вузли' }],
-    };
+  it('imports once: a rerun never overwrites edits', async () => {
+    await db
+      .update(quizzes)
+      .set({ title: 'Edited in the app' })
+      .where(eq(quizzes.slug, 'basic-knots'));
+    await db
+      .update(categories)
+      .set({ name: 'Renamed' })
+      .where(eq(categories.slug, 'patrony-kureniv'));
 
-    beforeEach(async () => {
-      await seed(db, [bohun, knotsWithOwnCategory]);
-    });
+    await seed(db, [bohun, knots]);
 
-    it('withdraws the Quiz and the Categories nothing else uses', async () => {
-      await seed(db, [bohun]);
-
-      expect((await get('/api/quizzes/basic-knots')).status).toBe(404);
-      expect((await get('/api/quizzes?q=bowline')).body).toEqual([]);
-      expect((await get('/api/categories/uzly')).status).toBe(404);
-      expect((await get('/api/categories')).body.map((c: { slug: string }) => c.slug)).toEqual([
-        'istoriia-ukrainy',
-        'patrony-kureniv',
-      ]);
-      expect((await get('/api/quizzes/ivan-bohun')).status).toBe(200);
-    });
-
-    it('removes nothing when the new seed run is invalid', async () => {
-      const broken = { ...bohun, questions: [] };
-
-      await expect(seed(db, [broken])).rejects.toThrow();
-
-      expect((await get('/api/quizzes/basic-knots')).status).toBe(200);
-      expect((await get('/api/categories/uzly')).status).toBe(200);
-    });
+    expect((await get('/api/quizzes/basic-knots')).body.title).toBe('Edited in the app');
+    const [category] = await db
+      .select()
+      .from(categories)
+      .where(eq(categories.slug, 'patrony-kureniv'));
+    expect(category?.name).toBe('Renamed');
   });
 
-  it('reports how many Quizzes it added, updated and removed', async () => {
+  it('never deletes a Quiz it does not own, nor a Category', async () => {
+    await db.insert(categories).values({ slug: 'empty', name: 'Порожня' });
+    await db.insert(quizzes).values({
+      slug: 'authored',
+      title: 'Authored',
+      description: 'd',
+      language: 'uk',
+      questions: [],
+      status: 'draft',
+    });
+
+    await seed(db, [bohun]);
+
+    expect(await db.select({ slug: quizzes.slug }).from(quizzes).orderBy(quizzes.slug)).toEqual([
+      { slug: 'authored' },
+      { slug: 'basic-knots' },
+      { slug: 'ivan-bohun' },
+    ]);
+    expect(await db.select().from(categories).where(eq(categories.slug, 'empty'))).toHaveLength(1);
+  });
+
+  it('reports how many Quizzes it added and skipped', async () => {
     const extra = { ...knots, slug: 'extra-knots', title: 'Extra Knots' };
 
-    expect(await seed(db, [{ ...bohun, title: 'Changed' }, extra])).toEqual({
-      added: 1,
-      updated: 1,
-      removed: 1,
-    });
+    expect(await seed(db, [bohun, extra])).toEqual({ added: 1, skipped: 1 });
   });
 
   it('writes nothing when a Quiz breaks the content rules', async () => {
     const broken = { ...knots, slug: 'broken', questions: [] };
+    const fresh = { ...knots, slug: 'fresh' };
 
-    await expect(seed(db, [{ ...bohun, title: 'Changed' }, broken])).rejects.toThrow();
-    expect((await get('/api/quizzes/ivan-bohun')).body.title).toBe('Іван Богун');
+    await expect(seed(db, [fresh, broken])).rejects.toThrow();
+    expect((await get('/api/quizzes/fresh')).status).toBe(404);
   });
 
   it('writes nothing when two Quizzes give one Category different names', async () => {
@@ -236,18 +247,19 @@ describe('seed', () => {
       slug: 'renamed',
       categories: [{ slug: 'patrony-kureniv', name: 'Інша назва' }],
     };
+    const fresh = { ...knots, slug: 'fresh' };
 
-    await expect(seed(db, [{ ...bohun, title: 'Changed' }, renamed])).rejects.toThrow(
+    await expect(seed(db, [fresh, bohun, renamed])).rejects.toThrow(
       /patrony-kureniv.*Патрони куренів.*Інша назва/s,
     );
-    expect((await get('/api/quizzes/ivan-bohun')).body.title).toBe('Іван Богун');
+    expect((await get('/api/quizzes/fresh')).status).toBe(404);
     expect((await get('/api/quizzes/renamed')).status).toBe(404);
   });
 
   it('stores the Quiz Language in its standard spelling', async () => {
-    await seed(db, [{ ...knots, language: 'en-us' }]);
+    await seed(db, [{ ...knots, slug: 'us-knots', language: 'en-us' }]);
 
-    expect((await get('/api/quizzes/basic-knots')).body.language).toBe('en-US');
+    expect((await get('/api/quizzes/us-knots')).body.language).toBe('en-US');
   });
 });
 

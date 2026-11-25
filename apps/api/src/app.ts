@@ -1,16 +1,32 @@
+import cookie from '@fastify/cookie';
+import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
-import Fastify, { type FastifyError } from 'fastify';
+import Fastify, { type FastifyError, type FastifyServerOptions } from 'fastify';
 import { sql } from 'drizzle-orm';
 import { z } from 'zod';
+import { accountRoutes } from './account.ts';
+import { adminRoutes } from './admin.ts';
+import { authoringRoutes } from './authoring.ts';
+import { authRoutes, defaultAuthLimits, type AuthLimits } from './auth.ts';
 import type { Db } from './db/client.ts';
+import { defaultResetLimits, passwordResetRoutes, type ResetLimits } from './password-reset.ts';
+import { createPasswordHasher, parsePeppers } from './passwords.ts';
 import {
   categoriesResponse,
   categoryResponse,
   quizResponse,
   quizSummariesResponse,
 } from './response-schemas.ts';
+import type { RegistrationMode } from './registration-mode.ts';
+import { createFakeMailer, type Mailer } from './mailer.ts';
 import { findCategory, findQuiz, listCategories, searchQuizzes } from './quizzes.ts';
+
+declare module 'fastify' {
+  interface FastifyInstance {
+    mailer: Mailer;
+  }
+}
 
 const slugParams = z.object({ slug: z.string() });
 const searchQuery = z.object({ q: z.string().trim().min(1) });
@@ -21,21 +37,49 @@ export type RateLimitOptions = { max: number; timeWindow: string };
 
 export function buildApp({
   db,
+  passwordPeppers,
+  mailer = createFakeMailer(),
   logger = false,
   trustProxy = false,
   rateLimit: rateLimitOptions = { max: 300, timeWindow: '1 minute' },
+  authLimits = {},
+  resetLimits = {},
+  webBaseUrl = 'http://localhost:5173',
+  corsOrigins = [],
+  secureCookies = true,
+  now = () => new Date(),
+  registrationMode = 'open',
 }: {
   db: Db;
-  logger?: boolean;
+  /** PASSWORD_PEPPERS: `version:secret,...`, first is current. Throws when missing or malformed. */
+  passwordPeppers: string | undefined;
+  /** Defaults to an in-memory fake, so an app built without one never sends real mail. */
+  mailer?: Mailer;
+  logger?: FastifyServerOptions['logger'];
   /** Read the client address from X-Forwarded-For. Enable only behind a load balancer. */
   trustProxy?: boolean | number;
   rateLimit?: RateLimitOptions;
+  authLimits?: { [K in keyof AuthLimits]?: Partial<AuthLimits[K]> };
+  resetLimits?: { [K in keyof ResetLimits]?: Partial<ResetLimits[K]> };
+  /** Where mailed links point: the web app's address. */
+  webBaseUrl?: string;
+  /** Origins allowed to call the API from a browser with credentials. Empty: same origin only. */
+  corsOrigins?: string[];
+  /** Set the Secure flag on the session cookie. On by default; only local development and tests turn it off. */
+  secureCookies?: boolean;
+  /** The clock, so tests can move time. */
+  now?: () => Date;
+  /** REGISTRATION_MODE. `closed`: self-registration answers 403; only Admins make Accounts. */
+  registrationMode?: RegistrationMode;
 }) {
+  const hasher = createPasswordHasher(parsePeppers(passwordPeppers));
   const app = Fastify({
     logger,
     requestTimeout: 30_000,
     trustProxy: typeof trustProxy === 'number' ? (_address, hop) => hop < trustProxy : trustProxy,
   });
+
+  app.decorate('mailer', mailer);
 
   // Readiness reports 503 as soon as shutdown starts, so the load balancer stops routing here.
   let closing = false;
@@ -44,6 +88,13 @@ export function buildApp({
   });
 
   app.register(helmet);
+  app.register(cookie);
+  app.register(cors, {
+    origin: corsOrigins,
+    credentials: true,
+    methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'X-Requested-With'],
+  });
   app.register(rateLimit, {
     ...rateLimitOptions,
     allowList: (request) => probePaths.has(request.routeOptions.url ?? ''),
@@ -67,6 +118,56 @@ export function buildApp({
 
   app.register(
     async (api) => {
+      // Mutating requests need a header a cross-site form cannot set. See ADR 0008.
+      api.addHook('onRequest', async (request, reply) => {
+        if (['GET', 'HEAD', 'OPTIONS'].includes(request.method)) return;
+        if (!request.headers['x-requested-with']) {
+          return reply.code(403).send({ error: 'csrf_header_required' });
+        }
+      });
+
+      if (registrationMode === 'closed') {
+        api.addHook('onRequest', async (request, reply) => {
+          if (request.method === 'POST' && request.routeOptions.url === '/api/register') {
+            return reply.code(403).send({ error: 'registration_closed' });
+          }
+        });
+      }
+
+      api.register(authoringRoutes, { prefix: '/authoring', db, now, secureCookies });
+      api.register(adminRoutes, { prefix: '/admin', db, now, secureCookies });
+
+      const authDeps = {
+        db,
+        mailer,
+        hasher,
+        now,
+        webBaseUrl,
+        secureCookies,
+        limits: {
+          perIp: { ...defaultAuthLimits.perIp, ...authLimits.perIp },
+          perEmail: { ...defaultAuthLimits.perEmail, ...authLimits.perEmail },
+        },
+      };
+      api.register(authRoutes, authDeps);
+      api.register(accountRoutes, authDeps);
+
+      api.register(passwordResetRoutes, {
+        db,
+        mailer,
+        hasher,
+        now,
+        webBaseUrl,
+        limits: {
+          requestPerIp: { ...defaultResetLimits.requestPerIp, ...resetLimits.requestPerIp },
+          requestPerEmail: {
+            ...defaultResetLimits.requestPerEmail,
+            ...resetLimits.requestPerEmail,
+          },
+          completePerIp: { ...defaultResetLimits.completePerIp, ...resetLimits.completePerIp },
+        },
+      });
+
       // Liveness: the process is up. Never touches the database.
       api.get('/live', async () => ({ status: 'ok' }));
 

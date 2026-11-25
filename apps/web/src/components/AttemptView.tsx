@@ -7,13 +7,15 @@ import { QuizHeader } from './QuizHeader.tsx';
 
 interface AttemptViewProps {
   attempt: AnsweringAttempt;
+  /** The Quiz's Author, shown under the title. */
+  author?: { displayName: string } | null | undefined;
   onChoose: (questionId: number, optionId: number) => void;
   onFinish: () => void;
   titleRef?: Ref<HTMLHeadingElement> | undefined;
 }
 
 /** All Questions on one page, no feedback until Finish. */
-export function AttemptView({ attempt, onChoose, onFinish, titleRef }: AttemptViewProps) {
+export function AttemptView({ attempt, author, onChoose, onFinish, titleRef }: AttemptViewProps) {
   const { t } = useTranslation();
   const { quiz, questions } = attempt;
   const total = questions.length;
@@ -21,7 +23,7 @@ export function AttemptView({ attempt, onChoose, onFinish, titleRef }: AttemptVi
 
   return (
     <div className="flex flex-col gap-6">
-      <QuizHeader quiz={quiz} titleRef={titleRef} />
+      <QuizHeader quiz={quiz} author={author} titleRef={titleRef} />
 
       <ol className="flex flex-col gap-4">
         {questions.map((question, index) => (

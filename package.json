@@ -15,6 +15,7 @@
     "typecheck": "pnpm -r typecheck",
     "db:up": "docker compose up -d --wait",
     "db:seed": "pnpm --filter @yunakquiz/api db:seed",
+    "mail:last": "pnpm --filter @yunakquiz/api mail:last",
     "dev:api": "pnpm --filter @yunakquiz/api dev",
     "check:stories": "node scripts/check-stories.mjs",
     "dev:web": "pnpm --filter @yunakquiz/web dev",

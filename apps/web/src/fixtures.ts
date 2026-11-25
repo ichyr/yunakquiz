@@ -6,6 +6,7 @@ import {
   startAttempt,
   type Category,
   type QuizSummary,
+  type QuizView,
 } from '@yunakquiz/core';
 
 export const sampleQuiz = quizSchema.parse({
@@ -34,6 +35,12 @@ export const sampleQuiz = quizSchema.parse({
     },
   ],
 });
+
+/** The Quiz as the Quiz screen gets it, with its Author. */
+export const sampleQuizView: QuizView = {
+  ...sampleQuiz,
+  author: { displayName: 'Олена Коваль' },
+};
 
 export const sampleQuizSummaries: QuizSummary[] = [
   {

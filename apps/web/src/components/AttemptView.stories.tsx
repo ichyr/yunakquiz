@@ -41,3 +41,6 @@ export const Interactive: Story = {
     return <AttemptView attempt={attempt} onChoose={choose} onFinish={args.onFinish} />;
   },
 };
+
+/** The Quiz screen as Guests see it: the Author name under the title. */
+export const WithAuthor: Story = { args: { author: { displayName: 'Олена Коваль' } } };

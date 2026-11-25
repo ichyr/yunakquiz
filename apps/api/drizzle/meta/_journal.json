@@ -22,6 +22,27 @@
       "when": 1794252092136,
       "tag": "0002_require-ukrainian-locale",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1795632731262,
+      "tag": "0003_luxuriant_talon",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1795633617094,
+      "tag": "0004_graceful_the_renegades",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1795635655275,
+      "tag": "0005_quiz-ownership",
+      "breakpoints": true
     }
   ]
 }

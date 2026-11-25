@@ -8,7 +8,11 @@
     "start": "node src/server.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node --env-file=../../.env.development --env-file-if-exists=../../.env src/db/migrate.ts",
+    "mail:last": "node --env-file=../../.env.development scripts/mail-last.ts",
     "db:seed": "node --env-file=../../.env.development --env-file-if-exists=../../.env seed/run.ts",
+    "db:seed:test-account": "node --env-file=../../.env.development --env-file-if-exists=../../.env seed/test-account-run.ts",
+    "db:seed:admin": "node --env-file=../../.env.development --env-file-if-exists=../../.env seed/first-admin-run.ts",
+    "db:cleanup-unverified": "node --env-file=../../.env.development --env-file-if-exists=../../.env scripts/cleanup-unverified.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
@@ -20,8 +24,12 @@
     "vitest": "^5.0.5"
   },
   "dependencies": {
+    "@aws-sdk/client-ses": "^3.1176.0",
+    "@fastify/cookie": "^11.1.5",
+    "@fastify/cors": "^11.4.3",
     "@fastify/helmet": "^13.2.0",
     "@fastify/rate-limit": "^11.3.0",
+    "@node-rs/argon2": "^2.2.2",
     "@yunakquiz/core": "workspace:*",
     "close-with-grace": "^2.5.0",
     "drizzle-orm": "^0.45.4",

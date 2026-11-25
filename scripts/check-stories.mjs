@@ -10,11 +10,24 @@ import { existsSync, globSync } from 'node:fs';
 
 const root = 'apps/web/src';
 const routePages = [
+  'routes/AdminGate.tsx',
+  'routes/AuthorGate.tsx',
+  'routes/AuthorEditorPage.tsx',
+  'routes/AuthorPreviewPage.tsx',
+  'routes/AuthorQuizzesPage.tsx',
+  'routes/AdminCategoriesPage.tsx',
+  'routes/AdminUsersPage.tsx',
   'routes/CategoryPage.tsx',
   'routes/HomePage.tsx',
+  'routes/AccountPage.tsx',
+  'routes/ConfirmEmailPage.tsx',
+  'routes/LoginPage.tsx',
   'routes/QuizPage.tsx',
+  'routes/RegisterPage.tsx',
+  'routes/ResetPasswordPage.tsx',
   'routes/RootLayout.tsx',
   'routes/SearchPage.tsx',
+  'routes/VerifyPage.tsx',
 ];
 const entryFiles = ['main.tsx', 'router.tsx'];
 const exempt = new Map([

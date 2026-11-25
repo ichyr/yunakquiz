@@ -1,7 +1,7 @@
 import {
   categorySchema,
   categoryWithQuizzesSchema,
-  quizSchema,
+  quizViewSchema,
   quizSummarySchema,
 } from '@yunakquiz/core';
 import { z } from 'zod';
@@ -34,4 +34,4 @@ function responseSchema(schema: z.ZodType) {
 export const categoriesResponse = responseSchema(z.array(categorySchema));
 export const categoryResponse = responseSchema(categoryWithQuizzesSchema);
 export const quizSummariesResponse = responseSchema(z.array(quizSummarySchema));
-export const quizResponse = responseSchema(quizSchema);
+export const quizResponse = responseSchema(quizViewSchema);

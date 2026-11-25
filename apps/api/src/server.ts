@@ -1,7 +1,15 @@
+import { SESClient } from '@aws-sdk/client-ses';
 import closeWithGrace from 'close-with-grace';
 import { buildApp } from './app.ts';
 import { createDb } from './db/client.ts';
-import { optionalEnv, requireEnv } from './env.ts';
+import { createSesMailer } from './mailer.ts';
+import { parsePeppers } from './passwords.ts';
+import { parseRegistrationMode } from './registration-mode.ts';
+import { isLocalEnvironment, optionalEnv, requireEnv } from './env.ts';
+
+// Fail before anything else starts: no pepper, no API (ADR 0008).
+const passwordPeppers = requireEnv('PASSWORD_PEPPERS');
+parsePeppers(passwordPeppers);
 
 const { db, close } = createDb(requireEnv('DATABASE_URL'), {
   onError: (error) => app.log.error(error, 'Idle database client error'),
@@ -12,7 +20,23 @@ const trustProxyHops = Number(optionalEnv('TRUST_PROXY', '0'));
 if (!Number.isInteger(trustProxyHops) || trustProxyHops < 0) {
   throw new Error('TRUST_PROXY must be a non-negative integer (number of proxy hops)');
 }
-const app = buildApp({ db, logger: true, trustProxy: trustProxyHops > 0 ? trustProxyHops : false });
+// SES client reads AWS_REGION, credentials and AWS_ENDPOINT_URL (LocalStack in dev) from the environment.
+const mailer = createSesMailer({ client: new SESClient({}), from: requireEnv('MAIL_FROM') });
+const app = buildApp({
+  db,
+  passwordPeppers,
+  mailer,
+  logger: true,
+  webBaseUrl: optionalEnv('WEB_BASE_URL', 'http://localhost:5173'),
+  // Comma-separated origins allowed to call the API with cookies. Unset: same origin only.
+  corsOrigins: optionalEnv('CORS_ORIGINS', '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean),
+  secureCookies: !isLocalEnvironment(),
+  trustProxy: trustProxyHops > 0 ? trustProxyHops : false,
+  registrationMode: parseRegistrationMode(optionalEnv('REGISTRATION_MODE', 'open')),
+});
 
 // On SIGINT/SIGTERM (or a fatal error): stop accepting connections, drain in-flight
 // requests, then end the pool. Force-exit if that takes longer than `delay`.

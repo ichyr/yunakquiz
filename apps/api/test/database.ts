@@ -9,5 +9,7 @@ export function createTestDb() {
 }
 
 export function resetDatabase(db: Db) {
-  return db.execute(sql`truncate quiz_categories, quizzes, categories restart identity`);
+  return db.execute(
+    sql`truncate quiz_categories, quizzes, categories, users restart identity cascade`,
+  );
 }
