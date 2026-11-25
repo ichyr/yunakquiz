@@ -31,12 +31,7 @@ const plain: Record<string, string> = {
   ч: 'ch',
   ш: 'sh',
   щ: 'shch',
-  // Russian letters an Author may type by habit: the closest plain spelling.
-  ё: 'e',
-  ы: 'y',
-  э: 'e',
   ь: '',
-  ъ: '',
   "'": '',
   ʼ: '',
   '’': '',
