@@ -6,9 +6,9 @@ import {
   tokenInputSchema,
   validatePassword,
 } from '@yunakquiz/core';
-import { and, count, eq, ne } from 'drizzle-orm';
+import { and, eq, ne } from 'drizzle-orm';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import { lockAdminChanges } from './admin-users.ts';
+import { countAdmins, lockAdminChanges } from './admin-users.ts';
 import { changeEmailMail } from './account-mail-templates.ts';
 import type { AuthDeps } from './auth.ts';
 import { oneTimeTokens, sessions, users } from './db/schema.ts';
@@ -204,14 +204,13 @@ export async function accountRoutes(api: FastifyInstance, deps: AuthDeps) {
     if (!(await confirmPassword(user, body.data.currentPassword, reply))) return;
 
     const deleted = await db.transaction(async (tx) => {
-      if (user.role === 'admin') {
-        // Same lock as the Admin routes, so two Admins cannot leave none (ADR 0008).
-        await lockAdminChanges(tx);
-        const [admins] = await tx
-          .select({ total: count() })
-          .from(users)
-          .where(eq(users.role, 'admin'));
-        if ((admins?.total ?? 0) <= 1) return false;
+      // Same lock as the Admin routes, so two Admins cannot leave none (ADR 0008). The
+      // role is read again under it: the session row above may be stale.
+      await lockAdminChanges(tx);
+      const [current] = await tx.select().from(users).where(eq(users.id, user.id));
+      if (!current) return true;
+      if (current.role === 'admin' && current.verifiedAt !== null && (await countAdmins(tx)) <= 1) {
+        return false;
       }
       // Sessions and tokens go with the row (ON DELETE CASCADE).
       await tx.delete(users).where(eq(users.id, user.id));

@@ -106,7 +106,11 @@ export async function adminRoutes(api: FastifyInstance, deps: AdminDeps) {
   });
 }
 
-function denied(reply: FastifyReply, reason: 'not_found' | 'forbidden' | 'last_admin') {
+function denied(
+  reply: FastifyReply,
+  reason: 'not_found' | 'forbidden' | 'last_admin' | 'target_unverified',
+) {
   if (reason === 'not_found') return reply.code(404).send({ error: 'not_found' });
+  if (reason === 'target_unverified') return reply.code(409).send({ error: reason });
   return reply.code(403).send({ error: reason });
 }

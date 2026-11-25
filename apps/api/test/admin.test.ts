@@ -266,6 +266,40 @@ describe('PATCH /api/admin/users/:id/role', () => {
     ).toBe(400);
   });
 
+  it('refuses to promote an unverified Account', async () => {
+    const ctx = start();
+    const admin = await adminSession(ctx);
+    const target = await account('user', { verified: false });
+    const response = await call(ctx, 'PATCH', `/api/admin/users/${target.id}/role`, admin.cookie, {
+      role: 'admin',
+    });
+    expect(response.statusCode).toBe(409);
+    expect(response.json()).toEqual({ error: 'target_unverified' });
+    const [row] = await db.select().from(users).where(eq(users.id, target.id));
+    expect(row?.role).toBe('user');
+  });
+
+  it('does not count an unverified Admin: the only verified Admin stays', async () => {
+    const ctx = start();
+    const admin = await adminSession(ctx);
+    await account('admin', { verified: false });
+    const response = await call(ctx, 'PATCH', `/api/admin/users/${admin.id}/role`, admin.cookie, {
+      role: 'user',
+    });
+    expect(response.statusCode).toBe(403);
+    expect(response.json()).toEqual({ error: 'last_admin' });
+  });
+
+  it('lets the only verified Admin demote an unverified Admin', async () => {
+    const ctx = start();
+    const admin = await adminSession(ctx);
+    const other = await account('admin', { verified: false });
+    const response = await call(ctx, 'PATCH', `/api/admin/users/${other.id}/role`, admin.cookie, {
+      role: 'user',
+    });
+    expect(response.statusCode).toBe(200);
+  });
+
   it('keeps one Admin when two Admins demote each other at once', async () => {
     for (let round = 0; round < 5; round++) {
       await resetDatabase(db);
@@ -316,6 +350,23 @@ describe('DELETE /api/admin/users/:id', () => {
     expect(response.statusCode).toBe(403);
     expect(response.json()).toEqual({ error: 'last_admin' });
     expect(await db.select().from(users).where(eq(users.id, admin.id))).toHaveLength(1);
+  });
+
+  it('does not count an unverified Admin: the only verified Admin cannot be deleted', async () => {
+    const ctx = start();
+    const admin = await adminSession(ctx);
+    await account('admin', { verified: false });
+    const response = await call(ctx, 'DELETE', `/api/admin/users/${admin.id}`, admin.cookie);
+    expect(response.statusCode).toBe(403);
+    expect(response.json()).toEqual({ error: 'last_admin' });
+  });
+
+  it('lets the only verified Admin delete an unverified Admin', async () => {
+    const ctx = start();
+    const admin = await adminSession(ctx);
+    const other = await account('admin', { verified: false });
+    const response = await call(ctx, 'DELETE', `/api/admin/users/${other.id}`, admin.cookie);
+    expect(response.statusCode).toBe(204);
   });
 
   it('lets an Admin delete another Admin', async () => {
@@ -455,6 +506,11 @@ describe('first Admin seed', () => {
     expect((await call(ctx, 'GET', '/api/admin/users', cookie)).statusCode).toBe(200);
   });
 
+  it('creates an Admin when the only existing Admin is unverified', async () => {
+    await account('admin', { verified: false });
+    expect(await seedFirstAdmin(db, input())).toBe('created');
+  });
+
   it('does nothing when an Admin already exists, so a restart never adds one', async () => {
     await account('admin');
     expect(await seedFirstAdmin(db, input())).toBe('admin_exists');
@@ -485,6 +541,20 @@ describe('parseRegistrationMode', () => {
 });
 
 describe('last Admin across the self-service route', () => {
+  it('refuses self-deletion by the only verified Admin when an unverified Admin exists', async () => {
+    const ctx = start();
+    const admin = await adminSession(ctx);
+    await account('admin', { verified: false });
+    const response = await ctx.app.inject({
+      method: 'POST',
+      url: '/api/account/delete',
+      headers: { ...csrfHeaders, cookie: admin.cookie },
+      payload: { currentPassword: strongPassword },
+    });
+    expect(response.statusCode).toBe(409);
+    expect(response.json()).toEqual({ error: 'last_admin' });
+  });
+
   it('keeps one Admin when two Admins delete their own Accounts at once', async () => {
     const ctx = start();
     const a = await adminSession(ctx);

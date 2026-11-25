@@ -527,6 +527,15 @@ describe('deleteUnverifiedAccounts', () => {
     expect(await userRow(oldVerified)).toBeDefined();
   });
 
+  it('never removes an Admin, even an unverified one', async () => {
+    const now = new Date();
+    const email = await insertAccount(false, 30, now);
+    await db.update(users).set({ role: 'admin' }).where(eq(users.email, email));
+
+    expect(await deleteUnverifiedAccounts(db, now)).toBe(0);
+    expect(await userRow(email)).toBeDefined();
+  });
+
   it('removes the tokens and sessions of a removed Account, and frees its email', async () => {
     const now = new Date();
     const email = await insertAccount(false, 8, now);

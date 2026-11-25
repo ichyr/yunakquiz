@@ -28,6 +28,7 @@ export default function AdminUsersPage() {
   function errorText(error: unknown) {
     if (error instanceof ApiError) {
       if (error.code === 'last_admin') return t('admin.errors.lastAdmin');
+      if (error.code === 'target_unverified') return t('admin.errors.targetUnverified');
       if (error.status === 403) return t('admin.errors.forbidden');
       if (error.status === 404) return t('admin.errors.notFound');
     }

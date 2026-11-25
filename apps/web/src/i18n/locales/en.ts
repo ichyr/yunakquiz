@@ -157,6 +157,7 @@ export const en: Messages = {
     },
     errors: {
       lastAdmin: 'The last Admin cannot be demoted or deleted.',
+      targetUnverified: 'An unverified Account cannot be made an Admin.',
       forbidden: 'You are not allowed to do this.',
       notFound: 'This Account no longer exists.',
       generic: 'Something went wrong. Try again.',

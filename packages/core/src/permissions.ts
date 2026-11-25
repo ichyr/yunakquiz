@@ -9,7 +9,12 @@ import type { roleSchema } from './account.ts';
 export type Role = z.infer<typeof roleSchema>;
 
 export type Actor = { id: number; role: Role; verified: boolean };
-export type AccountTarget = { id: number; role: Role };
+/** `verified: false` marks an Account that is not counted as an Admin even when its role says so. */
+export type AccountTarget = { id: number; role: Role; verified?: boolean };
+
+/** Only verified Admins count towards "the last Admin stays": the cleanup may remove the rest. */
+export const isCountedAdmin = (target: AccountTarget): boolean =>
+  target.role === 'admin' && target.verified !== false;
 
 /** A verified Admin: the only kind of actor with admin powers. */
 export const isAdmin = (actor: Actor | null): boolean =>
@@ -20,8 +25,8 @@ export function canListUsers(actor: Actor | null): boolean {
 }
 
 /**
- * `adminCount` is the number of Admins right now. A change must really change the role,
- * and the last Admin can never be demoted.
+ * `adminCount` is the number of verified Admins right now. A change must really change the
+ * role, an unverified Account is never promoted, and the last Admin can never be demoted.
  */
 export function canChangeRole(
   actor: Actor | null,
@@ -31,7 +36,8 @@ export function canChangeRole(
 ): boolean {
   if (!isAdmin(actor)) return false;
   if (target.role === newRole) return false;
-  if (target.role === 'admin' && adminCount <= 1) return false;
+  if (newRole === 'admin' && target.verified === false) return false;
+  if (isCountedAdmin(target) && adminCount <= 1) return false;
   return true;
 }
 
@@ -42,7 +48,7 @@ export function canDeleteUser(
   adminCount: number,
 ): boolean {
   if (!isAdmin(actor)) return false;
-  if (target.role === 'admin' && adminCount <= 1) return false;
+  if (isCountedAdmin(target) && adminCount <= 1) return false;
   return true;
 }
 

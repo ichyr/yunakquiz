@@ -1,8 +1,6 @@
 import { validatePassword } from '@yunakquiz/core';
-import { count, eq } from 'drizzle-orm';
-import { lockAdminChanges } from '../src/admin-users.ts';
+import { countAdmins, lockAdminChanges } from '../src/admin-users.ts';
 import type { Db } from '../src/db/client.ts';
-import { users } from '../src/db/schema.ts';
 import { createPasswordHasher, parsePeppers } from '../src/passwords.ts';
 import { createUser } from '../src/users.ts';
 
@@ -33,8 +31,7 @@ export async function seedFirstAdmin(
   return db.transaction(async (tx) => {
     // Held until commit: a second seed waits here, then sees the Admin this one made.
     await lockAdminChanges(tx);
-    const [admins] = await tx.select({ value: count() }).from(users).where(eq(users.role, 'admin'));
-    if ((admins?.value ?? 0) > 0) return 'admin_exists';
+    if ((await countAdmins(tx)) > 0) return 'admin_exists';
     // createUser takes a Db, so it inserts on its own connection; the lock above still covers it.
     const created = await createUser(db, hasher, {
       email,

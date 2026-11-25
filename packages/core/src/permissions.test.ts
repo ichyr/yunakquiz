@@ -23,6 +23,17 @@ describe('canListUsers', () => {
   });
 });
 
+describe('unverified targets', () => {
+  it('are never promoted', () => {
+    expect(canChangeRole(admin, { id: 3, role: 'user', verified: false }, 'admin', 1)).toBe(false);
+  });
+  it('are not counted as Admins when demoted or deleted', () => {
+    const target = { id: 3, role: 'admin', verified: false } as const;
+    expect(canChangeRole(admin, target, 'user', 1)).toBe(true);
+    expect(canDeleteUser(admin, target, 1)).toBe(true);
+  });
+});
+
 describe('canChangeRole', () => {
   it('denies a Guest, a User and an unverified Admin, whatever the change', () => {
     for (const actor of [null, user, unverifiedAdmin]) {
