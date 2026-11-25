@@ -2,7 +2,7 @@ import {
   accountSchema,
   categorySchema,
   categoryWithQuizzesSchema,
-  quizSchema,
+  quizViewSchema,
   quizSummarySchema,
   type ChangeDisplayNameInput,
   type ChangeEmailInput,
@@ -104,7 +104,7 @@ export function searchQuizzes(query: string) {
 }
 
 export function fetchQuiz(slug: string) {
-  return get(`/quizzes/${encodeURIComponent(slug)}`, quizSchema);
+  return get(`/quizzes/${encodeURIComponent(slug)}`, quizViewSchema);
 }
 
 /** The signed-in Account, or null for a Guest. Throws `session_expired` (401) for a dead cookie. */

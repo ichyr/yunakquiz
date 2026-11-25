@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { sampleQuiz } from '@/fixtures';
+import { sampleQuizView } from '@/fixtures';
 import { QuizAttempt } from './QuizAttempt.tsx';
 
 const meta = {
@@ -7,7 +7,7 @@ const meta = {
   component: QuizAttempt,
   parameters: { layout: 'fullscreen' },
   decorators: [(Story) => <div className="mx-auto max-w-2xl p-4">{Story()}</div>],
-  args: { quiz: sampleQuiz },
+  args: { quiz: sampleQuizView },
 } satisfies Meta<typeof QuizAttempt>;
 
 export default meta;

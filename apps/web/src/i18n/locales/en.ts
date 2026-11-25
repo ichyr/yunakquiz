@@ -30,6 +30,9 @@ export const en: Messages = {
   quizLanguage: {
     label: 'Quiz Language: {{language}}',
   },
+  quiz: {
+    author: 'By {{name}}',
+  },
   attempt: {
     question: 'Question {{number}} of {{total}}',
     progress: '{{answered}} of {{total}} answered',

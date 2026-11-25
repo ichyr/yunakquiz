@@ -28,6 +28,9 @@ export const uk = {
   quizLanguage: {
     label: 'Мова вікторини: {{language}}',
   },
+  quiz: {
+    author: 'Автор: {{name}}',
+  },
   attempt: {
     question: 'Питання {{number}} з {{total}}',
     progress: 'Відповіді: {{answered}} з {{total}}',
