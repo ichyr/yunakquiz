@@ -1,6 +1,7 @@
 import type { Preview } from '@storybook/react-vite';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import i18n from '../src/i18n/index.ts';
+import { Toaster } from '../src/components/ui/sonner.tsx';
 import '../src/index.css';
 
 const preview: Preview = {
@@ -22,7 +23,12 @@ const preview: Preview = {
     (Story, context) => {
       const locale = context.globals['locale'] as string;
       if (i18n.language !== locale) void i18n.changeLanguage(locale);
-      return <RouterProvider router={createMemoryRouter([{ path: '*', element: <Story /> }])} />;
+      return (
+        <>
+          <RouterProvider router={createMemoryRouter([{ path: '*', element: <Story /> }])} />
+          <Toaster />
+        </>
+      );
     },
   ],
   parameters: {

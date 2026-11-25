@@ -38,6 +38,7 @@ export const en: Messages = {
     progress: '{{answered}} of {{total}} answered',
     finish: 'Finish',
     finishHint: 'Answer every Question to finish.',
+    actionFailed: 'That did not work. Your answers are kept, so you can carry on.',
   },
   leave: {
     title: 'Leave this Quiz?',
