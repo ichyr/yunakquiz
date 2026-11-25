@@ -11,3 +11,4 @@ export {
 export * from './explanation.ts';
 export * from './password.ts';
 export * from './account.ts';
+export * from './password-reset.ts';
