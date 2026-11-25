@@ -20,7 +20,7 @@ export type CreateUserResult =
   { ok: true; user: UserRow } | { ok: false; reason: 'email_taken' | 'display_name_taken' };
 
 /** The Postgres error behind a Drizzle error, when it is a unique violation. */
-function uniqueViolation(error: unknown): string | undefined {
+export function uniqueViolation(error: unknown): string | undefined {
   const pg = (error as { cause?: unknown })?.cause ?? error;
   const { code, constraint } = pg as { code?: string; constraint?: string };
   return code === '23505' ? (constraint ?? '') : undefined;

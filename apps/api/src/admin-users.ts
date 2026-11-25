@@ -10,6 +10,7 @@ import {
 } from '@yunakquiz/core';
 import { and, count, desc, eq, ilike, isNotNull, or, sql } from 'drizzle-orm';
 import type { Db } from './db/client.ts';
+import { quizCountOf } from './authoring-quizzes.ts';
 import { users } from './db/schema.ts';
 import type { UserRow } from './users.ts';
 
@@ -62,6 +63,7 @@ export async function listUsers(
         role: users.role,
         verifiedAt: users.verifiedAt,
         createdAt: users.createdAt,
+        quizCount: quizCountOf,
       })
       .from(users)
       .where(where)
@@ -76,8 +78,6 @@ export async function listUsers(
       ...row,
       verified: verifiedAt !== null,
       createdAt: createdAt.toISOString(),
-      // Authoring does not exist yet (ticket #79 ships before the Quiz owner column).
-      quizCount: 0,
     })),
     total: total?.value ?? 0,
     page,
@@ -143,7 +143,7 @@ export async function changeRole(
   });
 }
 
-/** The Account, its sessions and its tokens go (cascading foreign keys). Quizzes will survive ownerless. */
+/** The Account, its sessions and its tokens go (cascading foreign keys). Their Quizzes survive ownerless (`author_id` ON DELETE SET NULL). */
 export async function deleteUserAsAdmin(
   db: Db,
   actorId: number,

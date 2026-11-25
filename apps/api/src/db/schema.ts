@@ -1,4 +1,4 @@
-import type { Question } from '@yunakquiz/core';
+import type { DraftQuiz, Question, QuizStatus } from '@yunakquiz/core';
 import { sql } from 'drizzle-orm';
 import {
   check,
@@ -82,10 +82,25 @@ export const quizzes = pgTable(
     title: text().notNull(),
     description: text().notNull(),
     language: text().notNull(),
-    // Validated by quizSchema in @yunakquiz/core. See ADR 0005.
-    questions: jsonb().$type<Question[]>().notNull(),
+    // A draft holds partial content; a published Quiz is validated by quizSchema in
+    // @yunakquiz/core (ADR 0005, ADR 0009). Draft content never reaches Guests.
+    questions: jsonb().$type<DraftQuiz['questions'] | Question[]>().notNull(),
+    // Null: ownerless (seeded, or its Author deleted their Account). Only Admins manage those.
+    authorId: integer().references(() => users.id, { onDelete: 'set null' }),
+    status: text().$type<QuizStatus>().notNull(),
+    // Optimistic locking: a save sends the version it loaded; every write adds one.
+    version: integer().notNull().default(1),
+    // Set at the first publish and kept: it is what locks the slug for Authors.
+    publishedAt: timestamp({ withTimezone: true }),
+    updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
+    check('quizzes_status_check', sql`${table.status} in ('draft', 'published')`),
+    check(
+      'quizzes_published_has_date_check',
+      sql`${table.status} = 'draft' or ${table.publishedAt} is not null`,
+    ),
+    index('quizzes_author_idx').on(table.authorId),
     // pg_trgm indexes serve the ILIKE search. See ADR 0003.
     index('quizzes_title_trgm').using('gin', sql`${table.title} gin_trgm_ops`),
     index('quizzes_description_trgm').using('gin', sql`${table.description} gin_trgm_ops`),

@@ -7,6 +7,7 @@ import { sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { accountRoutes } from './account.ts';
 import { adminRoutes } from './admin.ts';
+import { authoringRoutes } from './authoring.ts';
 import { authRoutes, defaultAuthLimits, type AuthLimits } from './auth.ts';
 import type { Db } from './db/client.ts';
 import { defaultResetLimits, passwordResetRoutes, type ResetLimits } from './password-reset.ts';
@@ -133,6 +134,7 @@ export function buildApp({
         });
       }
 
+      api.register(authoringRoutes, { prefix: '/authoring', db, now, secureCookies });
       api.register(adminRoutes, { prefix: '/admin', db, now, secureCookies });
 
       const authDeps = {
