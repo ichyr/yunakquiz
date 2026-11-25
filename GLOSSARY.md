@@ -60,3 +60,23 @@ _Avoid_: Grade, mark, result, оцінка, бал
 What a scout sees after finishing an Attempt: the Score, and for every Question their chosen Option, the Correct Option and the Explanation.
 _Ukrainian_: розбір
 _Avoid_: Summary, report, feedback, підсумок, звіт
+
+**Account**:
+A registered identity with an email, a unique display name and a password. Needed to author Quizzes; taking Quizzes needs none. Has a role, `user` or `admin`.
+_Ukrainian_: обліковий запис
+_Avoid_: User, profile, login, користувач, профіль
+
+**Guest**:
+A person without an Account, or not logged in. Can browse, search and take Quizzes, and sees only published ones.
+_Ukrainian_: гість
+_Avoid_: Anonymous, visitor, User
+
+**Author**:
+The holder of a verified Account who wrote a Quiz. Their display name is shown on the Quiz. A Quiz loses its Author when the Account is deleted.
+_Ukrainian_: автор
+_Avoid_: Creator, owner, editor, User
+
+**Admin**:
+An Account with the `admin` role. Manages Accounts and Categories, and can edit or delete any Quiz.
+_Ukrainian_: адміністратор
+_Avoid_: Superuser, moderator, root

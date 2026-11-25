@@ -318,6 +318,12 @@ importers:
 
   packages/core:
     dependencies:
+      '@zxcvbn-ts/language-common':
+        specifier: ^4.2.0
+        version: 4.2.0
+      '@zxcvbn-ts/language-en':
+        specifier: ^4.1.2
+        version: 4.1.2
       zod:
         specifier: ^4.6.7
         version: 4.6.7
@@ -2692,6 +2698,15 @@ packages:
 
   '@webcontainer/env@1.1.1':
     resolution: {integrity: sha512-6aN99yL695Hi9SuIk1oC88l9o0gmxL1nGWWQ/kNy81HigJ0FoaoTXpytCj6ItzgyCEwA9kF1wixsTuv5cjsgng==}
+
+  '@zxcvbn-ts/dictionary-compression@3.0.1':
+    resolution: {integrity: sha512-p3KyPzxGc3vWSap5hHA6SllbUCmh7s+NtpGyC3qEWrxYJT9t9TUAzjPm48Okipo+UUyPQfDlIvTcs9JRShBFiQ==}
+
+  '@zxcvbn-ts/language-common@4.2.0':
+    resolution: {integrity: sha512-LPcIu73i+ZV2fYPRDAd/JfaBblFUMVXSjupxkr0NU04wViVkYuzZ6ncw6pDgUdm7MMM5llMMzkbzhKrwXgv1tg==}
+
+  '@zxcvbn-ts/language-en@4.1.2':
+    resolution: {integrity: sha512-VICTXVOYrfSCtmrLLv41x4nx34H+BEJO2FPYMUXK3DGYxVtBfqUKx9Xq9WfxBpDAvvlQ4DocUA9bqNN18zKMXA==}
 
   abstract-logging@2.0.1:
     resolution: {integrity: sha512-2BjRTZxTPvheOvGbBslFSYOUkr+SjPtOnrLP33f+VIWLzezQpZcqVg7ja3L4dBXmzzgwT+a029jRx5PCi3JuiA==}
@@ -6166,6 +6181,16 @@ snapshots:
       tinyrainbow: 2.0.0
 
   '@webcontainer/env@1.1.1': {}
+
+  '@zxcvbn-ts/dictionary-compression@3.0.1': {}
+
+  '@zxcvbn-ts/language-common@4.2.0':
+    dependencies:
+      '@zxcvbn-ts/dictionary-compression': 3.0.1
+
+  '@zxcvbn-ts/language-en@4.1.2':
+    dependencies:
+      '@zxcvbn-ts/dictionary-compression': 3.0.1
 
   abstract-logging@2.0.1: {}
 

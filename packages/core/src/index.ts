@@ -9,3 +9,4 @@ export {
   type Score,
 } from './review.ts';
 export * from './explanation.ts';
+export * from './password.ts';
