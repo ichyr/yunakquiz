@@ -1,7 +1,7 @@
 import type { AdminUser } from '@yunakquiz/core';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import { useAdminUsers, useChangeRole, useDeleteUser } from '@/api/admin';
 import { ApiError } from '@/api/client';
 import { AdminUserList, type AdminUserAction } from '@/components/AdminUserList';
@@ -61,6 +61,9 @@ export default function AdminUsersPage() {
     <div className="flex flex-col gap-6">
       <DocumentTitle page={t('admin.title')} />
       <PageTitle>{t('admin.title')}</PageTitle>
+      <Link to="/admin/categories" className="text-sm underline underline-offset-4">
+        {t('admin.categoriesNav')}
+      </Link>
       {users.data ? (
         <AdminUserList
           page={users.data}
