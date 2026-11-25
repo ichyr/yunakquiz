@@ -83,3 +83,8 @@ export function canChangeSlug(
   if (!canEditQuiz(actor, quiz)) return false;
   return isAdmin(actor) || !quiz.everPublished;
 }
+
+/** Categories are managed by verified Admins only; Authors choose from the existing ones. */
+export function canManageCategories(actor: Actor | null): boolean {
+  return isAdmin(actor);
+}

@@ -7,10 +7,13 @@ import { PageMessage } from '@/components/PageMessage';
 
 // The Admin screens are fetched only after the guard saw an Admin, so Guests and Users never
 // download them (ADR 0004). A router `lazy` route would load the chunk before the guard runs.
-const AdminUsersPage = lazy(() => import('./AdminUsersPage.tsx'));
+const adminPages = {
+  users: lazy(() => import('./AdminUsersPage.tsx')),
+  categories: lazy(() => import('./AdminCategoriesPage.tsx')),
+};
 
-/** The route guard for /admin/users. The API is what really refuses; this keeps the chunk away. */
-export function AdminGate() {
+/** The route guard for the Admin screens. The API is what really refuses; this keeps the chunks away. */
+export function AdminGate({ page }: { page: keyof typeof adminPages }) {
   const { t } = useTranslation();
   const me = useMe();
 
@@ -28,9 +31,10 @@ export function AdminGate() {
       </>
     );
   }
+  const Page = adminPages[page];
   return (
     <Suspense fallback={<LoadingState />}>
-      <AdminUsersPage />
+      <Page />
     </Suspense>
   );
 }
