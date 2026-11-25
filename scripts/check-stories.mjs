@@ -12,6 +12,8 @@ const root = 'apps/web/src';
 const routePages = [
   'routes/CategoryPage.tsx',
   'routes/HomePage.tsx',
+  'routes/AccountPage.tsx',
+  'routes/ConfirmEmailPage.tsx',
   'routes/LoginPage.tsx',
   'routes/QuizPage.tsx',
   'routes/RegisterPage.tsx',

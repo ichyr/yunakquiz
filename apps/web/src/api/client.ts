@@ -4,6 +4,10 @@ import {
   categoryWithQuizzesSchema,
   quizSchema,
   quizSummarySchema,
+  type ChangeDisplayNameInput,
+  type ChangeEmailInput,
+  type ChangePasswordInput,
+  type DeleteAccountInput,
   type LoginInput,
   type PasswordIssue,
   type RegisterInput,
@@ -112,6 +116,26 @@ export function login(input: LoginInput) {
 
 export async function logout(): Promise<void> {
   await request('POST', '/logout', {});
+}
+
+export function changeDisplayName(input: ChangeDisplayNameInput) {
+  return request('POST', '/account/display-name', input).then((body) => accountSchema.parse(body));
+}
+
+export async function changePassword(input: ChangePasswordInput): Promise<void> {
+  await request('POST', '/account/password', input);
+}
+
+export async function changeEmail(input: ChangeEmailInput): Promise<void> {
+  await request('POST', '/account/email', input);
+}
+
+export async function confirmEmailChange(token: string): Promise<void> {
+  await request('POST', '/account/email/confirm', { token });
+}
+
+export async function deleteAccount(input: DeleteAccountInput): Promise<void> {
+  await request('POST', '/account/delete', input);
 }
 
 export async function verifyEmail(token: string): Promise<void> {

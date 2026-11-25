@@ -23,15 +23,18 @@ export function useAuthErrorText() {
     if (error instanceof ApiError) {
       if (error.code === 'invalid_credentials') return t('auth.errors.invalidCredentials');
       if (error.code === 'display_name_taken') return t('auth.errors.displayNameTaken');
+      if (error.code === 'invalid_current_password') return t('account.errors.wrongPassword');
       if (error.status === 429) return t('auth.errors.tooManyRequests');
       return t('auth.errors.generic');
     }
     const { message, ref } = (error ?? {}) as Partial<FieldError>;
     const code = passwordIssues.find((issue) => issue === message);
     if (code) return t(`auth.passwordIssues.${code}`);
+    if (message === 'invalid_current_password') return t('account.errors.wrongPassword');
     if (message === 'display_name_taken') return t('auth.errors.displayNameTaken');
     const field = (ref as { name?: string } | undefined)?.name;
     if (field === 'email') return t('auth.errors.email');
+    if (field === 'newEmail') return t('auth.errors.email');
     if (field === 'displayName') return t('auth.errors.displayName');
     if (message) return t('auth.errors.required');
     return t('auth.errors.generic');

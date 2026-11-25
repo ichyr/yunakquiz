@@ -28,12 +28,15 @@ export function AccountMenu({ account, onLogout }: AccountMenuProps) {
 
   return (
     <div className="flex items-center gap-1">
-      <span
-        className="max-w-32 truncate text-sm"
-        title={t('auth.session.signedInAs', { name: account.displayName })}
-      >
-        {account.displayName}
-      </span>
+      <Button asChild size="sm" variant="ghost" className="max-w-32">
+        <Link
+          to="/account"
+          title={t('auth.session.signedInAs', { name: account.displayName })}
+          aria-label={`${t('account.title')}: ${account.displayName}`}
+        >
+          <span className="truncate">{account.displayName}</span>
+        </Link>
+      </Button>
       <Button size="sm" variant="ghost" onClick={onLogout}>
         {t('auth.logout')}
       </Button>

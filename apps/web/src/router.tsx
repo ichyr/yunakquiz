@@ -49,6 +49,15 @@ export const router = createBrowserRouter([
         path: '/verify',
         lazy: () => import('./routes/VerifyPage.tsx').then((m) => ({ Component: m.VerifyPage })),
       },
+      {
+        path: '/account',
+        lazy: () => import('./routes/AccountPage.tsx').then((m) => ({ Component: m.AccountPage })),
+      },
+      {
+        path: '/confirm-email',
+        lazy: () =>
+          import('./routes/ConfirmEmailPage.tsx').then((m) => ({ Component: m.ConfirmEmailPage })),
+      },
       { path: '*', element: <NotFoundPage /> },
     ],
   },
