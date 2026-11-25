@@ -21,6 +21,9 @@ export default defineConfig({
       env: {
         DATABASE_URL:
           process.env['DATABASE_URL'] ?? 'postgres://yunakquiz:yunakquiz@localhost:5432/yunakquiz',
+        // The API refuses to start without these. Mail goes nowhere here: no AWS endpoint is set.
+        PASSWORD_PEPPERS: process.env['PASSWORD_PEPPERS'] ?? 'v1:e2e-only-pepper-not-a-secret-0001',
+        MAIL_FROM: process.env['MAIL_FROM'] ?? 'noreply@yunakquiz.test',
       },
     },
     {

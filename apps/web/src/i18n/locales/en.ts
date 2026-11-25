@@ -54,6 +54,58 @@ export const en: Messages = {
     explanation: 'Explanation',
     tryAgain: 'Try again',
   },
+  auth: {
+    email: 'Email',
+    displayName: 'Display name',
+    displayNameHint: '2 to 50 characters. Shown as the Author name on your Quizzes.',
+    password: 'Password',
+    passwordHint:
+      'At least 15 characters. Spaces are allowed: a phrase of several words works well.',
+    login: 'Log in',
+    register: 'Register',
+    logout: 'Log out',
+    working: 'Please wait…',
+    errors: {
+      email: 'Enter a valid email address.',
+      displayName: 'The display name needs 2 to 50 characters.',
+      required: 'Fill in this field.',
+      displayNameTaken: 'This display name is taken. Choose another.',
+      invalidCredentials: 'Email or password is incorrect.',
+      tooManyRequests: 'Too many attempts. Try again later.',
+      generic: 'Something went wrong. Try again.',
+    },
+    passwordIssues: {
+      too_short: 'The password is too short: use at least 15 characters.',
+      too_long: 'The password is too long: use at most 128 characters.',
+      common: 'This password is too common. Choose another.',
+      contains_email: 'The password must not contain part of your email.',
+      contains_name: 'The password must not contain your display name.',
+      sequence: 'The password must not be a simple sequence such as 123456 or abcdef.',
+      repeat: 'The password must not be the same text repeated.',
+    },
+    registerPage: {
+      title: 'Register',
+      sentTitle: 'Check your mail',
+      sentDescription:
+        'We sent a mail with a link to confirm your address. It is valid for 24 hours and works once.',
+      haveAccount: 'Already have an Account?',
+    },
+    loginPage: {
+      title: 'Log in',
+      noAccount: 'No Account yet?',
+    },
+    verify: {
+      title: 'Confirm your address',
+      pending: 'Confirming your address…',
+      success: 'Your address is confirmed. You can log in now.',
+      failure: 'The link is invalid or has expired. Register again.',
+    },
+    session: {
+      expired: 'Your session expired. Log in again.',
+      unverified: 'Confirm your address with the link in your mail to author Quizzes.',
+      signedInAs: 'Logged in as {{name}}',
+    },
+  },
   status: {
     loading: 'Loading…',
     errorTitle: 'Something went wrong',

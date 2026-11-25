@@ -3,7 +3,15 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { LanguageSwitcher } from './LanguageSwitcher.tsx';
 
-export function AppLayout({ children }: { children: ReactNode }) {
+interface AppLayoutProps {
+  children: ReactNode;
+  /** Login links or the signed-in name. Passed in so the layout needs no data of its own. */
+  account?: ReactNode;
+  /** A notice under the header, such as an expired session. */
+  notice?: ReactNode;
+}
+
+export function AppLayout({ children, account, notice }: AppLayoutProps) {
   const { t } = useTranslation();
 
   return (
@@ -16,9 +24,13 @@ export function AppLayout({ children }: { children: ReactNode }) {
               {t('app.tagline')}
             </span>
           </Link>
-          <LanguageSwitcher />
+          <div className="flex items-center gap-2">
+            {account}
+            <LanguageSwitcher />
+          </div>
         </div>
       </header>
+      {notice}
       <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-6 sm:py-8">{children}</main>
     </div>
   );

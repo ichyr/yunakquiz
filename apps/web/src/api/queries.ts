@@ -1,5 +1,16 @@
-import { QueryClient, useQuery } from '@tanstack/react-query';
-import { fetchCategories, fetchCategory, fetchQuiz, isNotFound, searchQuizzes } from './client.ts';
+import { QueryClient, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  fetchCategories,
+  fetchCategory,
+  fetchMe,
+  fetchQuiz,
+  isNotFound,
+  login,
+  logout,
+  register,
+  searchQuizzes,
+  verifyEmail,
+} from './client.ts';
 
 export function createQueryClient() {
   return new QueryClient({
@@ -36,4 +47,47 @@ export function useQuizSearch(query: string) {
 
 export function useQuiz(slug: string) {
   return useQuery({ queryKey: ['quizzes', slug], queryFn: () => fetchQuiz(slug) });
+}
+
+/** Who is signed in: the Account, null for a Guest, or a `session_expired` error. One call for the whole app. */
+export function useMe() {
+  return useQuery({ queryKey: ['me'], queryFn: fetchMe, retry: false });
+}
+
+export function useRegister() {
+  return useMutation({ mutationFn: register });
+}
+
+export function useLogin() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: login,
+    onSuccess: (account) => queryClient.setQueryData(['me'], account),
+  });
+}
+
+export function useLogout() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: logout,
+    // Settled either way: a failed logout must not leave the UI claiming a session it dropped.
+    onSettled: () => queryClient.setQueryData(['me'], null),
+  });
+}
+
+/** Spends the mailed token once. A query, so React StrictMode's second render reuses the first call. */
+export function useVerifyEmail(token: string) {
+  const queryClient = useQueryClient();
+  return useQuery({
+    queryKey: ['verify', token],
+    queryFn: async () => {
+      await verifyEmail(token);
+      void queryClient.invalidateQueries({ queryKey: ['me'] });
+      return true;
+    },
+    enabled: token !== '',
+    retry: false,
+    staleTime: Infinity,
+    gcTime: Infinity,
+  });
 }

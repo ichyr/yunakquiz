@@ -12,9 +12,12 @@ const root = 'apps/web/src';
 const routePages = [
   'routes/CategoryPage.tsx',
   'routes/HomePage.tsx',
+  'routes/LoginPage.tsx',
   'routes/QuizPage.tsx',
+  'routes/RegisterPage.tsx',
   'routes/RootLayout.tsx',
   'routes/SearchPage.tsx',
+  'routes/VerifyPage.tsx',
 ];
 const entryFiles = ['main.tsx', 'router.tsx'];
 const exempt = new Map([

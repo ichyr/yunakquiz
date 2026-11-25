@@ -36,6 +36,19 @@ export const router = createBrowserRouter([
         path: '/quizzes/:slug',
         lazy: () => import('./routes/QuizPage.tsx').then((m) => ({ Component: m.QuizPage })),
       },
+      {
+        path: '/register',
+        lazy: () =>
+          import('./routes/RegisterPage.tsx').then((m) => ({ Component: m.RegisterPage })),
+      },
+      {
+        path: '/login',
+        lazy: () => import('./routes/LoginPage.tsx').then((m) => ({ Component: m.LoginPage })),
+      },
+      {
+        path: '/verify',
+        lazy: () => import('./routes/VerifyPage.tsx').then((m) => ({ Component: m.VerifyPage })),
+      },
       { path: '*', element: <NotFoundPage /> },
     ],
   },
