@@ -1,0 +1,30 @@
+name: stacked-pr-issues
+
+# GitHub closes `Closes #N` issues only when the PR merges into the default
+# branch. A stacked PR merges into another feature branch, so its issues stay
+# open. Remind the author to close them once the stack reaches main.
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  remind:
+    if: github.event.pull_request.merged && github.event.pull_request.base.ref != github.event.repository.default_branch
+    runs-on: ubuntu-latest
+    steps:
+      - name: Comment on issues that will stay open
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          issues=$(printf '%s' "$PR_BODY" | grep -oiE '(close[sd]?|fix(es|ed)?|resolve[sd]?) #[0-9]+' | grep -oE '#[0-9]+' | sort -u | tr '\n' ' ')
+          [ -z "$issues" ] && exit 0
+          gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --body "Merged into \`$BASE_REF\`, not \`$DEFAULT_BRANCH\`, so GitHub will not close: $issues
+          Close them by hand once the stack lands on \`$DEFAULT_BRANCH\`, or move the \`Closes\` lines to the top PR of the stack."
