@@ -46,12 +46,12 @@ export type ResetDeps = {
   limits: ResetLimits;
 };
 
+const invalidToken = (reply: FastifyReply) => reply.code(400).send({ error: 'invalid_token' });
+
 export async function passwordResetRoutes(api: FastifyInstance, deps: ResetDeps) {
   const { db, mailer, hasher, now, webBaseUrl, limits } = deps;
   const clock = () => now().getTime();
   const emailLimiter = createKeyedLimiter({ ...limits.requestPerEmail, now: clock });
-
-  const invalidToken = (reply: FastifyReply) => reply.code(400).send({ error: 'invalid_token' });
 
   api.post(
     '/password-reset/request',

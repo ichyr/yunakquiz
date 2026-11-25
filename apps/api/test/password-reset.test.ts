@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { eq } from 'drizzle-orm';
-import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { oneTimeTokens, sessions, users } from '../src/db/schema.ts';
 import { createPasswordHasher, parsePeppers } from '../src/passwords.ts';
 import { createUser } from '../src/users.ts';
@@ -127,9 +127,10 @@ describe('POST /api/password-reset/request', () => {
     const ctx = start();
     const { email } = await account();
     const first = await mailedToken(ctx, email);
-    ctx.mailer.outbox.length = 0;
 
-    const second = await mailedToken(ctx, email);
+    await requestReset(ctx, email);
+    await vi.waitFor(() => expect(ctx.mailer.outbox.filter((m) => m.to === email)).toHaveLength(2));
+    const second = tokenIn(ctx.mailer.outbox.filter((m) => m.to === email)[1]!);
 
     expect((await completeReset(ctx, first, newPassword)).statusCode).toBe(400);
     expect((await completeReset(ctx, second, newPassword)).statusCode).toBe(204);

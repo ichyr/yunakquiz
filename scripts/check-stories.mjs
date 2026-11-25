@@ -15,6 +15,7 @@ const routePages = [
   'routes/LoginPage.tsx',
   'routes/QuizPage.tsx',
   'routes/RegisterPage.tsx',
+  'routes/ResetPasswordPage.tsx',
   'routes/RootLayout.tsx',
   'routes/SearchPage.tsx',
   'routes/VerifyPage.tsx',

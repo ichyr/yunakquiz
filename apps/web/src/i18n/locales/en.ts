@@ -106,6 +106,21 @@ export const en: Messages = {
       signedInAs: 'Logged in as {{name}}',
     },
   },
+  passwordReset: {
+    forgotLink: 'Forgot your password?',
+    requestTitle: 'Reset your password',
+    requestIntro: 'Enter your email. If an Account exists, we send a link to set a new password.',
+    requestSubmit: 'Send link',
+    sentTitle: 'Check your mail',
+    sentDescription:
+      'If an Account exists for that address, we sent a mail with a link. It is valid for 1 hour and works once.',
+    completeTitle: 'Set a new password',
+    newPassword: 'New password',
+    completeSubmit: 'Set password',
+    invalidToken: 'The link is invalid or has expired. Ask for a new one.',
+    askAgain: 'Ask for a new link',
+    doneTitle: 'Your password is changed. Log in with the new one; you were logged out everywhere.',
+  },
   status: {
     loading: 'Loading…',
     errorTitle: 'Something went wrong',

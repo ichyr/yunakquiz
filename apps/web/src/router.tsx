@@ -49,6 +49,13 @@ export const router = createBrowserRouter([
         path: '/verify',
         lazy: () => import('./routes/VerifyPage.tsx').then((m) => ({ Component: m.VerifyPage })),
       },
+      {
+        path: '/reset-password',
+        lazy: () =>
+          import('./routes/ResetPasswordPage.tsx').then((m) => ({
+            Component: m.ResetPasswordPage,
+          })),
+      },
       { path: '*', element: <NotFoundPage /> },
     ],
   },

@@ -20,6 +20,11 @@ export function LoginPage() {
           await navigate('/');
         }}
       />
+      <p className="text-sm">
+        <Link to="/reset-password" className="focus-ring rounded-sm text-primary underline">
+          {t('passwordReset.forgotLink')}
+        </Link>
+      </p>
       <p className="text-sm text-muted-foreground">
         {t('auth.loginPage.noAccount')}{' '}
         <Link to="/register" className="focus-ring rounded-sm text-primary underline">
