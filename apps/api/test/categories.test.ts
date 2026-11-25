@@ -255,3 +255,36 @@ describe('GET /api/admin/categories', () => {
     );
   });
 });
+
+describe('Categories on the public list need a published Quiz', () => {
+  it('hides a Category whose only Quiz is a draft, shows it to an Admin, and lists it once published', async () => {
+    const ctx = start();
+    const cookie = await adminCookie(ctx);
+    const categoryId = await seedCategory('draft-only', 'Чернетка');
+    const [draft] = await db
+      .insert(quizzes)
+      .values({
+        slug: 'draft-quiz',
+        title: 'draft-quiz',
+        description: 'Опис',
+        language: 'uk',
+        questions: [question],
+        status: 'draft',
+      })
+      .returning({ id: quizzes.id });
+    await db.insert(quizCategories).values({ quizId: draft!.id, categoryId });
+
+    expect((await call(ctx, 'GET', '/api/categories')).json()).toEqual([]);
+
+    const adminList = await call(ctx, 'GET', '/api/admin/categories', cookie);
+    expect(adminList.json()).toEqual([{ id: categoryId, slug: 'draft-only', name: 'Чернетка' }]);
+
+    await db
+      .update(quizzes)
+      .set({ status: 'published', publishedAt: new Date() })
+      .where(eq(quizzes.id, draft!.id));
+    expect((await call(ctx, 'GET', '/api/categories')).json()).toEqual([
+      { slug: 'draft-only', name: 'Чернетка' },
+    ]);
+  });
+});
