@@ -11,6 +11,8 @@ import {
   type LoginInput,
   type PasswordIssue,
   type RegisterInput,
+  type RequestResetInput,
+  type ResetPasswordInput,
 } from '@yunakquiz/core';
 import type { z } from 'zod';
 
@@ -136,6 +138,14 @@ export async function confirmEmailChange(token: string): Promise<void> {
 
 export async function deleteAccount(input: DeleteAccountInput): Promise<void> {
   await request('POST', '/account/delete', input);
+}
+
+export async function requestPasswordReset(input: RequestResetInput): Promise<void> {
+  await request('POST', '/password-reset/request', input);
+}
+
+export async function completePasswordReset(input: ResetPasswordInput): Promise<void> {
+  await request('POST', '/password-reset/complete', input);
 }
 
 export async function verifyEmail(token: string): Promise<void> {

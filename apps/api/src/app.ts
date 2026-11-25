@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { accountRoutes } from './account.ts';
 import { authRoutes, defaultAuthLimits, type AuthLimits } from './auth.ts';
 import type { Db } from './db/client.ts';
+import { defaultResetLimits, passwordResetRoutes, type ResetLimits } from './password-reset.ts';
 import { createPasswordHasher, parsePeppers } from './passwords.ts';
 import {
   categoriesResponse,
@@ -39,6 +40,7 @@ export function buildApp({
   trustProxy = false,
   rateLimit: rateLimitOptions = { max: 300, timeWindow: '1 minute' },
   authLimits = {},
+  resetLimits = {},
   webBaseUrl = 'http://localhost:5173',
   corsOrigins = [],
   secureCookies = true,
@@ -54,6 +56,7 @@ export function buildApp({
   trustProxy?: boolean | number;
   rateLimit?: RateLimitOptions;
   authLimits?: { [K in keyof AuthLimits]?: Partial<AuthLimits[K]> };
+  resetLimits?: { [K in keyof ResetLimits]?: Partial<ResetLimits[K]> };
   /** Where mailed links point: the web app's address. */
   webBaseUrl?: string;
   /** Origins allowed to call the API from a browser with credentials. Empty: same origin only. */
@@ -131,6 +134,22 @@ export function buildApp({
       };
       api.register(authRoutes, authDeps);
       api.register(accountRoutes, authDeps);
+
+      api.register(passwordResetRoutes, {
+        db,
+        mailer,
+        hasher,
+        now,
+        webBaseUrl,
+        limits: {
+          requestPerIp: { ...defaultResetLimits.requestPerIp, ...resetLimits.requestPerIp },
+          requestPerEmail: {
+            ...defaultResetLimits.requestPerEmail,
+            ...resetLimits.requestPerEmail,
+          },
+          completePerIp: { ...defaultResetLimits.completePerIp, ...resetLimits.completePerIp },
+        },
+      });
 
       // Liveness: the process is up. Never touches the database.
       api.get('/live', async () => ({ status: 'ok' }));

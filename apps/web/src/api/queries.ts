@@ -13,6 +13,8 @@ import {
   login,
   logout,
   register,
+  completePasswordReset,
+  requestPasswordReset,
   searchQuizzes,
   verifyEmail,
 } from './client.ts';
@@ -61,6 +63,14 @@ export function useMe() {
 
 export function useRegister() {
   return useMutation({ mutationFn: register });
+}
+
+export function useRequestPasswordReset() {
+  return useMutation({ mutationFn: requestPasswordReset });
+}
+
+export function useCompletePasswordReset() {
+  return useMutation({ mutationFn: completePasswordReset });
 }
 
 export function useLogin() {

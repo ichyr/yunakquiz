@@ -58,6 +58,13 @@ export const router = createBrowserRouter([
         lazy: () =>
           import('./routes/ConfirmEmailPage.tsx').then((m) => ({ Component: m.ConfirmEmailPage })),
       },
+      {
+        path: '/reset-password',
+        lazy: () =>
+          import('./routes/ResetPasswordPage.tsx').then((m) => ({
+            Component: m.ResetPasswordPage,
+          })),
+      },
       { path: '*', element: <NotFoundPage /> },
     ],
   },
