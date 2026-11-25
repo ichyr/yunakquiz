@@ -22,6 +22,13 @@
       "when": 1794252092136,
       "tag": "0002_require-ukrainian-locale",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1795632731262,
+      "tag": "0003_luxuriant_talon",
+      "breakpoints": true
     }
   ]
 }

@@ -1,6 +1,70 @@
 import type { Question } from '@yunakquiz/core';
 import { sql } from 'drizzle-orm';
-import { index, integer, jsonb, pgTable, primaryKey, text } from 'drizzle-orm/pg-core';
+import {
+  check,
+  customType,
+  index,
+  integer,
+  jsonb,
+  pgTable,
+  primaryKey,
+  text,
+  timestamp,
+} from 'drizzle-orm/pg-core';
+
+/** Case-insensitive text, for email and display name (needs the citext extension). */
+const citext = customType<{ data: string }>({ dataType: () => 'citext' });
+
+export const users = pgTable(
+  'users',
+  {
+    id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    email: citext().notNull().unique(),
+    displayName: citext().notNull().unique(),
+    passwordHash: text().notNull(),
+    // Selects the pepper at verify time. See docs/password-hashing.md.
+    pepperVersion: text().notNull(),
+    role: text().$type<'user' | 'admin'>().notNull().default('user'),
+    verifiedAt: timestamp({ withTimezone: true }),
+    interfaceLanguage: text().$type<'uk' | 'en'>().notNull().default('uk'),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    check('users_role_check', sql`${table.role} in ('user', 'admin')`),
+    check('users_interface_language_check', sql`${table.interfaceLanguage} in ('uk', 'en')`),
+  ],
+);
+
+/** `id` is the SHA-256 hash of the cookie value; the cookie value itself is never stored. */
+export const sessions = pgTable('sessions', {
+  id: text().primaryKey(),
+  userId: integer()
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  createdAt: timestamp({ withTimezone: true }).notNull(),
+  lastSeenAt: timestamp({ withTimezone: true }).notNull(),
+});
+
+export type TokenPurpose = 'verify_email' | 'reset_password';
+
+/** Single-use mailed tokens. `id` is the SHA-256 hash of the token; a used token is deleted. */
+export const oneTimeTokens = pgTable(
+  'one_time_tokens',
+  {
+    id: text().primaryKey(),
+    userId: integer()
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    purpose: text().$type<TokenPurpose>().notNull(),
+    expiresAt: timestamp({ withTimezone: true }).notNull(),
+  },
+  (table) => [
+    check(
+      'one_time_tokens_purpose_check',
+      sql`${table.purpose} in ('verify_email', 'reset_password')`,
+    ),
+  ],
+);
 
 export const categories = pgTable('categories', {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),

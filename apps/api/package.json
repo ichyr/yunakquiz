@@ -10,6 +10,7 @@
     "db:migrate": "node --env-file=../../.env.development --env-file-if-exists=../../.env src/db/migrate.ts",
     "mail:last": "node --env-file=../../.env.development scripts/mail-last.ts",
     "db:seed": "node --env-file=../../.env.development --env-file-if-exists=../../.env seed/run.ts",
+    "db:seed:test-account": "node --env-file=../../.env.development --env-file-if-exists=../../.env seed/test-account-run.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },

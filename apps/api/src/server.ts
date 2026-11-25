@@ -3,7 +3,12 @@ import closeWithGrace from 'close-with-grace';
 import { buildApp } from './app.ts';
 import { createDb } from './db/client.ts';
 import { createSesMailer } from './mailer.ts';
+import { parsePeppers } from './passwords.ts';
 import { optionalEnv, requireEnv } from './env.ts';
+
+// Fail before anything else starts: no pepper, no API (ADR 0008).
+const passwordPeppers = requireEnv('PASSWORD_PEPPERS');
+parsePeppers(passwordPeppers);
 
 const { db, close } = createDb(requireEnv('DATABASE_URL'), {
   onError: (error) => app.log.error(error, 'Idle database client error'),
@@ -18,8 +23,16 @@ if (!Number.isInteger(trustProxyHops) || trustProxyHops < 0) {
 const mailer = createSesMailer({ client: new SESClient({}), from: requireEnv('MAIL_FROM') });
 const app = buildApp({
   db,
+  passwordPeppers,
   mailer,
   logger: true,
+  webBaseUrl: optionalEnv('WEB_BASE_URL', 'http://localhost:5173'),
+  // Comma-separated origins allowed to call the API with cookies. Unset: same origin only.
+  corsOrigins: optionalEnv('CORS_ORIGINS', '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean),
+  secureCookies: process.env.NODE_ENV === 'production',
   trustProxy: trustProxyHops > 0 ? trustProxyHops : false,
 });
 

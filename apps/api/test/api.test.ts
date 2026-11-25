@@ -1,6 +1,6 @@
 import { categoryWithQuizzesSchema, quizSchema } from '@yunakquiz/core';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
-import { buildApp } from '../src/app.ts';
+import { buildApp } from './app.ts';
 import { createDb } from '../src/db/client.ts';
 import { categories } from '../src/db/schema.ts';
 import { seed } from '../seed/seed.ts';
