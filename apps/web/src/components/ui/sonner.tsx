@@ -7,8 +7,8 @@ export function Toaster(props: ToasterProps) {
       position="top-center"
       style={
         {
-          '--normal-bg': 'var(--popover)',
-          '--normal-text': 'var(--popover-foreground)',
+          '--normal-bg': 'var(--card)',
+          '--normal-text': 'var(--card-foreground)',
           '--normal-border': 'var(--border)',
           '--error-bg': 'var(--destructive-subtle)',
           '--error-text': 'var(--destructive)',

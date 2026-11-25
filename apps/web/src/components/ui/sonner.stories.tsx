@@ -5,7 +5,6 @@ import { Toaster } from './sonner';
 
 const meta = {
   title: 'UI/Toaster',
-  component: Toaster,
   decorators: [
     (Story) => (
       <>
