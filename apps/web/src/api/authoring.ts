@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   authoringQuizPageSchema,
+  categorySchema,
   authoringQuizSchema,
   quizIssueSchema,
   type AuthoringQuiz,
@@ -20,6 +21,16 @@ export function useMyQuizzes(page: number) {
   return useQuery({
     queryKey: ['authoring', 'quizzes', page],
     queryFn: () => get(`/authoring/quizzes?page=${page}`, authoringQuizPageSchema),
+    staleTime: 0,
+    retry: false,
+  });
+}
+
+/** Every Category, also those with no published Quiz: the public list hides those. */
+export function useAuthoringCategories() {
+  return useQuery({
+    queryKey: ['authoring', 'categories'],
+    queryFn: () => get('/authoring/categories', categorySchema.array()),
     staleTime: 0,
     retry: false,
   });

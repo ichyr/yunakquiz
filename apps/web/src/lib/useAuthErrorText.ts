@@ -33,8 +33,7 @@ export function useAuthErrorText() {
     if (message === 'invalid_current_password') return t('account.errors.wrongPassword');
     if (message === 'display_name_taken') return t('auth.errors.displayNameTaken');
     const field = (ref as { name?: string } | undefined)?.name;
-    if (field === 'email') return t('auth.errors.email');
-    if (field === 'newEmail') return t('auth.errors.email');
+    if (field === 'email' || field === 'newEmail') return t('auth.errors.email');
     if (field === 'displayName') return t('auth.errors.displayName');
     if (message) return t('auth.errors.required');
     return t('auth.errors.generic');

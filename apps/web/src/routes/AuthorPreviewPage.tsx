@@ -1,8 +1,7 @@
 import { validateForPublish } from '@yunakquiz/core';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
-import { useAuthoringQuiz } from '@/api/authoring';
-import { useCategories } from '@/api/queries';
+import { useAuthoringCategories, useAuthoringQuiz } from '@/api/authoring';
 import { DocumentTitle } from '@/components/DocumentTitle';
 import { PageMessage } from '@/components/PageMessage';
 import { PreviewBanner } from '@/components/PreviewBanner';
@@ -15,7 +14,7 @@ export default function AuthorPreviewPage() {
   const { t } = useTranslation();
   const { slug = '' } = useParams();
   const quiz = useAuthoringQuiz(slug);
-  const categories = useCategories();
+  const categories = useAuthoringCategories();
   const editTo = `/author/quizzes/${encodeURIComponent(slug)}`;
 
   if (!quiz.data || !categories.data) {

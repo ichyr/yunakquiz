@@ -17,6 +17,7 @@ import { Plus } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
+import { invalidQuizIssues } from '@/api/authoring';
 import { ApiError } from '@/api/client';
 import { Button } from '@/components/ui/button';
 import {
@@ -177,8 +178,7 @@ export function QuizEditorForm({
         return;
       }
       if (error.code === 'invalid_quiz') {
-        const body = error.body as { issues?: QuizIssue[] } | undefined;
-        showIssues(body?.issues ?? []);
+        showIssues(invalidQuizIssues(error));
         return;
       }
     }

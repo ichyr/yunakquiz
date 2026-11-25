@@ -1,8 +1,13 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router';
-import { checkSlug, useAuthoringActions, useAuthoringQuiz } from '@/api/authoring';
-import { useCategories, useLogin, useMe } from '@/api/queries';
+import {
+  checkSlug,
+  useAuthoringActions,
+  useAuthoringCategories,
+  useAuthoringQuiz,
+} from '@/api/authoring';
+import { useLogin, useMe } from '@/api/queries';
 import { DocumentTitle } from '@/components/DocumentTitle';
 import { PageTitle } from '@/components/PageTitle';
 import { QueryFallback } from '@/components/QueryFallback';
@@ -14,7 +19,7 @@ export default function AuthorEditorPage() {
   const { slug = '' } = useParams();
   const navigate = useNavigate();
   const me = useMe();
-  const categories = useCategories();
+  const categories = useAuthoringCategories();
   const quiz = useAuthoringQuiz(slug);
   const actions = useAuthoringActions();
   const login = useLogin();

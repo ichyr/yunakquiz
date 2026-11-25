@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { Input } from './input';
 import {
   Form,
@@ -12,6 +13,7 @@ import {
 } from './form';
 
 function Example({ invalid }: { invalid?: boolean }) {
+  const { t } = useTranslation();
   const form = useForm({ defaultValues: { name: '' } });
   if (invalid && !form.formState.errors.name) {
     form.setError('name', { message: 'Це поле обов’язкове.' });
@@ -28,7 +30,7 @@ function Example({ invalid }: { invalid?: boolean }) {
               <FormControl>
                 <Input {...field} />
               </FormControl>
-              <FormDescription>Показується як ім’я автора.</FormDescription>
+              <FormDescription>{t('auth.displayNameHint')}</FormDescription>
               <FormMessage />
             </FormItem>
           )}

@@ -732,7 +732,7 @@ describe('all Categories for the editor', () => {
 
     const response = await author.call('GET', '/api/authoring/categories');
     expect(response.statusCode).toBe(200);
-    const slugs = (response.json() as { slug: string }[]).map((c) => c.slug).sort();
+    const slugs = (response.json() as { slug: string }[]).map((c) => c.slug).toSorted();
     expect(slugs).toEqual(['empty', 'history', 'knots']);
 
     const publicList = await guest(ctx, 'GET', '/api/categories');

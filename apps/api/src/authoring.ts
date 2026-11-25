@@ -67,21 +67,6 @@ export async function authoringRoutes(api: FastifyInstance, deps: AuthoringDeps)
   // Every Category, unlike the public list, which hides those without a published Quiz.
   api.get('/categories', async () => listAllCategories(db));
 
-  // An Admin changing a Quiz they do not own is logged like any other Admin action: ids only.
-  const logAdminEdit = (
-    request: FastifyRequest,
-    action: 'save_quiz' | 'publish_quiz' | 'delete_quiz',
-    quizSlug: string,
-    ownerId: number | null,
-  ) => {
-    const actor = request.quizActor!;
-    if (!isAdmin(actor) || ownerId === actor.id) return;
-    request.log.info(
-      { event: 'admin_action', action, outcome: 'done', actorId: actor.id, ownerId, quizSlug },
-      'Admin action',
-    );
-  };
-
   api.get('/quizzes', async (request, reply) => {
     const query = pageQuery.safeParse(request.query);
     if (!query.success) return reply.code(400).send({ error: 'invalid_input' });
@@ -164,6 +149,21 @@ export async function authoringRoutes(api: FastifyInstance, deps: AuthoringDeps)
       );
       return { available };
     },
+  );
+}
+
+// An Admin changing a Quiz they do not own is logged like any other Admin action: ids only.
+function logAdminEdit(
+  request: FastifyRequest,
+  action: 'save_quiz' | 'publish_quiz' | 'delete_quiz',
+  quizSlug: string,
+  ownerId: number | null,
+): void {
+  const actor = request.quizActor!;
+  if (!isAdmin(actor) || ownerId === actor.id) return;
+  request.log.info(
+    { event: 'admin_action', action, outcome: 'done', actorId: actor.id, ownerId, quizSlug },
+    'Admin action',
   );
 }
 
