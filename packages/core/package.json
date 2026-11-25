@@ -12,6 +12,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@zxcvbn-ts/language-common": "^4.2.0",
+    "@zxcvbn-ts/language-en": "^4.1.2",
     "zod": "^4.6.7"
   },
   "devDependencies": {
