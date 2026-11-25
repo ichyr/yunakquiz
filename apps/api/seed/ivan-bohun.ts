@@ -100,7 +100,7 @@ export default {
     // TODO(#1): the prompt names the wrong treaty; the Explanation is about Біла Церква (1651)
     // and the 1654 union with Moscow.
     {
-      prompt: 'Як ставився Іван Богун до Берестейського договору 1654 р.?',
+      prompt: 'Як ставився Іван Богун до договору 1654 р. з Москвою?',
       options: [
         { text: 'Нейтрально' },
         { text: 'З прихильністю' },
