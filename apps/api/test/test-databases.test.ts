@@ -1,17 +1,24 @@
-import pg from 'pg';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   createTestDatabases,
   dropTestDatabases,
-  maintenanceUrl,
+  listTestDatabaseTickets,
   testDatabaseNames,
-} from '../src/test-databases.ts';
+  toMaintenanceUrl,
+  withMaintenanceClient,
+} from '../scripts/test-databases.ts';
 import { testDatabaseUrl } from './database.ts';
 
 describe('testDatabaseNames', () => {
   it('names a test and an e2e database after the ticket', () => {
-    expect(testDatabaseNames('84')).toEqual(['yunakquiz_test_84', 'yunakquiz_e2e_84']);
-    expect(testDatabaseNames('79fix')).toEqual(['yunakquiz_test_79fix', 'yunakquiz_e2e_79fix']);
+    expect(testDatabaseNames('84')).toEqual({
+      test: 'yunakquiz_test_84',
+      e2e: 'yunakquiz_e2e_84',
+    });
+    expect(testDatabaseNames('79fix')).toEqual({
+      test: 'yunakquiz_test_79fix',
+      e2e: 'yunakquiz_e2e_79fix',
+    });
   });
 
   it.each([
@@ -27,55 +34,46 @@ describe('testDatabaseNames', () => {
   ])('refuses the ticket %j', (ticket) => {
     expect(() => testDatabaseNames(ticket)).toThrow(/ticket/i);
   });
-
-  it('never yields the shared databases', () => {
-    for (const ticket of ['test', 'e2e', '1']) {
-      for (const name of testDatabaseNames(ticket)) {
-        expect(name).not.toBe('yunakquiz');
-        expect(name).not.toBe('yunakquiz_test');
-        expect(name).toMatch(/^yunakquiz_(test|e2e)_[a-z0-9_]+$/);
-      }
-    }
-  });
 });
 
-describe('create and drop', () => {
+describe('create, list and drop', () => {
   const ticket = `tdb${process.pid}`;
-  const adminUrl = maintenanceUrl(testDatabaseUrl);
+  const maintenanceUrl = toMaintenanceUrl(testDatabaseUrl);
 
-  async function existing() {
-    const client = new pg.Client({ connectionString: adminUrl });
-    await client.connect();
-    try {
-      const { rows } = await client.query<{ datname: string }>(
-        'select datname from pg_database where datname = any($1)',
-        [testDatabaseNames(ticket)],
-      );
-      return rows.map((row) => row.datname).toSorted();
-    } finally {
-      await client.end();
-    }
-  }
+  afterEach(() => dropTestDatabases(maintenanceUrl, ticket));
 
-  afterEach(() => dropTestDatabases(adminUrl, ticket));
+  it('creates both databases, tolerates a second create, lists the ticket, and drops them', async () => {
+    await createTestDatabases(maintenanceUrl, ticket);
+    await createTestDatabases(maintenanceUrl, ticket);
+    expect(await listTestDatabaseTickets(maintenanceUrl)).toContain(ticket);
 
-  it('creates both databases, tolerates a second create, and drops them', async () => {
-    await createTestDatabases(adminUrl, ticket);
-    await createTestDatabases(adminUrl, ticket);
-    expect(await existing()).toEqual([`yunakquiz_e2e_${ticket}`, `yunakquiz_test_${ticket}`]);
+    await dropTestDatabases(maintenanceUrl, ticket);
+    await dropTestDatabases(maintenanceUrl, ticket);
+    expect(await listTestDatabaseTickets(maintenanceUrl)).not.toContain(ticket);
+  });
 
-    await dropTestDatabases(adminUrl, ticket);
-    await dropTestDatabases(adminUrl, ticket);
-    expect(await existing()).toEqual([]);
+  it('lists a ticket that has only one of its two databases', async () => {
+    await createTestDatabases(maintenanceUrl, ticket);
+    const { test } = testDatabaseNames(ticket);
+    await withMaintenanceClient(maintenanceUrl, (client) =>
+      client.query(`drop database "${test}"`),
+    );
+    expect(await listTestDatabaseTickets(maintenanceUrl)).toContain(ticket);
+  });
+
+  it('never lists the shared databases', async () => {
+    const tickets = await listTestDatabaseTickets(maintenanceUrl);
+    expect(tickets).not.toContain('');
+    expect(tickets).not.toContain('yunakquiz');
   });
 
   it('refuses a ticket outside the pattern before touching the server', async () => {
-    await expect(createTestDatabases(adminUrl, '')).rejects.toThrow(/ticket/i);
-    await expect(dropTestDatabases(adminUrl, 'Bad Name')).rejects.toThrow(/ticket/i);
+    await expect(createTestDatabases(maintenanceUrl, '')).rejects.toThrow(/ticket/i);
+    await expect(dropTestDatabases(maintenanceUrl, 'Bad Name')).rejects.toThrow(/ticket/i);
   });
 
   it('points the maintenance URL at the postgres database', () => {
-    expect(maintenanceUrl('postgres://u:p@localhost:5432/yunakquiz_test_1?sslmode=disable')).toBe(
+    expect(toMaintenanceUrl('postgres://u:p@localhost:5432/yunakquiz_test_1?sslmode=disable')).toBe(
       'postgres://u:p@localhost:5432/postgres?sslmode=disable',
     );
   });
