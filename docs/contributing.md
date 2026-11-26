@@ -17,4 +17,5 @@ Cost is roughly model calls times context size, so keep both small. Background: 
 - **Handoff:** the coordinator hands off or runs `/clear` at 80–100k context, or after each batch of tickets merges.
 - **Stacked PRs:** `Closes #N` closes an issue only when its PR merges into `main`. Put every `Closes` line in the top PR of the stack; a lower PR uses `Ref #N`.
 - **Issue to PR:** `gh pr list --state all --search "N in:body"` finds the PR for issue N. Branch names don't carry the issue number.
+- **Test databases:** when port 5432 is taken, an implementer uses per-ticket databases ([apps/api/CLAUDE.md](../apps/api/CLAUDE.md#port-5432-is-taken)). It owns them, so it runs `pnpm db:test-db drop <ticket>` before its final report. As a backstop for stopped or crashed agents, the coordinator runs `pnpm db:test-db list` at the worktree cleanup step and drops the tickets that have no running agent, with `pnpm db:test-db drop <ticket>`.
 - **Starting context:** check `/context` now and then. A person turns off plugins and connectors this repo doesn't use, since `.claude/settings.json` is locked against agents.
