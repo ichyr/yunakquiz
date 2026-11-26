@@ -13,6 +13,21 @@ Before writing or reviewing code here, read [CODING_STANDARDS.md](CODING_STANDAR
 
 Vitest with `app.inject()` against the real Postgres database from Docker Compose, not mocks. Run `pnpm db:up` from the repo root first.
 
+### Port 5432 is taken
+
+Another Postgres (often the repo's own `yunakquiz-postgres-1`) may already run, so `pnpm db:up` fails on the port. Reuse it and give your ticket its own databases. Do not invent names.
+
+- `pnpm db:test-db create <ticket>` makes `yunakquiz_test_<ticket>` and `yunakquiz_e2e_<ticket>`. `<ticket>` is lowercase letters, digits and underscores, such as `84` or `79fix`. It connects through `DATABASE_URL`, to the `postgres` database; it needs no `docker exec`. It refuses any name outside `^yunakquiz_(test|e2e)_[a-z0-9_]+$`, so it never touches `yunakquiz` or `yunakquiz_test`.
+- API tests: `TEST_DATABASE_URL=postgres://yunakquiz:yunakquiz@localhost:5432/yunakquiz_test_<ticket> pnpm test`. No seeding: `test/global-setup.ts` migrates, and each test builds its own fixtures.
+- e2e: use `yunakquiz_e2e_<ticket>`, never the test database, because the API tests truncate tables and would wipe the e2e data. Prepare it with an environment variable, which beats the `--env-file` value:
+
+  ```
+  DATABASE_URL=postgres://yunakquiz:yunakquiz@localhost:5432/yunakquiz_e2e_<ticket> pnpm db:migrate
+  DATABASE_URL=postgres://yunakquiz:yunakquiz@localhost:5432/yunakquiz_e2e_<ticket> pnpm db:seed
+  ```
+
+- When you finish, run `pnpm db:test-db drop <ticket>`. `drop` closes any connection still open on those databases, and dropping a database that does not exist is not an error.
+
 ## Mail
 
 - Code sends mail through the `Mailer` interface (`src/mailer.ts`). `buildApp` takes a `mailer`; tests get a fake with an `outbox` per app instance, `server.ts` the SES one.
